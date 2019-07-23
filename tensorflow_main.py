@@ -1,0 +1,30 @@
+from tensorflow_case.tensorflow import tensorflow_case
+from tensorflow_case.tensor_neurons_case import bp_neural_networks
+from tensorflow_bpnn.tbp_neural import tbp_neural
+from mnist.load_mnist_data import mnist
+
+if __name__ == '__main__':
+    opt = 'bp'
+
+    if opt == 'case':
+        #case
+        tensorflow_test = tensorflow_case()
+        tensorflow_test.test_graph()
+
+        tensorflow_nn = bp_neural_networks('./')
+        tensorflow_nn.bp_nn()
+
+    if opt == 'bp':
+        #bp
+        mnist = mnist.load_mnist_data('tensorflow_case/mnist/data/')
+        neural_network = tbp_neural(input_node=784,
+                                    output_node=10,
+                                    hide_node=[500],
+                                    batch_size=100,
+                                    learn_rate=0.8,
+                                    decay_rate=0.99,
+                                    regularization_rate=0.0001,
+                                    train_step=30000,
+                                    moving_avgerage_decay=0.99)
+        neural_network.train(mnist, 'tensorflow_case/mode/')
+
