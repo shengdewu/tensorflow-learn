@@ -4,7 +4,6 @@ from functools import reduce
 class le_net5(object):
     def __init__(self, input_node,input_shape, full_shape, filter_list, filter_pool, learn_rate=0.001, decay_rate=0.99, regularization_rate=0.01, batch=2000):
         '''
-        :param input_node: 输入节点
         :param input_shape: 第一个卷积层输入节点 [w,h,channel] 长,宽,通道
         :param full_shape: [n1,n2...] 全连接层每层的神经元个数
         :param filter_list: [[w, h, channel, depth, strides],]
@@ -26,7 +25,6 @@ class le_net5(object):
         if len(filter_list) != len(filter_pool):
             raise RuntimeError('pool and filter is not eq')
 
-        self.__input_node = input_node
         self.__input_shape = input_shape
         self.__full_shape = full_shape
         self.__filter_list = filter_list
@@ -66,7 +64,7 @@ class le_net5(object):
     def create_mode(self, mnist):
         input_shape = self.__input_shape #[batch, w, h, c]
         input_shape.insert(0, self.__batch)
-        x = tf.placeholder(tf.float32, shape=[None, self.__input_node], name='x-put')
+        x = tf.placeholder(tf.float32, shape=input_shape, name='x-put')
 
         #卷积层
         conv = x

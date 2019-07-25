@@ -34,7 +34,8 @@ if __name__ == '__main__':
                                 input_shape=[28, 28, 1],
                                 full_shape=[512, 10],
                                 filter_list=[[5,5,1,32,1],[5,5,1,64,1]],
-                                filter_pool=[[2,2,2],[2,2,2]])
+                                filter_pool=[[2,2,2],[2,2,2]],
+                                batch=100)
         mnist = mnist.load_mnist_data('mnist/data/')
         le_net_5_mode.create_mode(mnist)
 
