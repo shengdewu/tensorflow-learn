@@ -33,7 +33,7 @@ if __name__ == '__main__':
         le_net_5_mode = le_net5(input_node=784,
                                 input_shape=[28, 28, 1],
                                 full_shape=[512, 10],
-                                filter_list=[[5,5,1,32,1],[5,5,1,64,1]],
+                                filter_list=[[5,5,1,32,1],[5,5,32,64,1]], #注意通道的赋值
                                 filter_pool=[[2,2,2],[2,2,2]],
                                 batch=100)
         mnist = mnist.load_mnist_data('mnist/data/')

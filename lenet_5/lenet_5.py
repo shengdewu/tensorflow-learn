@@ -7,7 +7,8 @@ class le_net5(object):
         :param input_shape: 第一个卷积层输入节点 [w,h,channel] 长,宽,通道
         :param full_shape: [n1,n2...] 全连接层每层的神经元个数
         :param filter_list: [[w, h, channel, depth, strides],]
-                            depth 表示有多少组滤波器,channel表示每组有多少个滤波器和输入得通道对应,
+                            depth 表示有多少组滤波器,
+                            channel表示每组有多少个滤波器和输入得通道对应, 这个通道数和上一次计算结果有关
                             strides 步长
                             len(filter_list) 代表卷积层的个数
         :param filter_pool:[[w,h,strides],] 池化层的滤波器 len(filter_pool)同filter_list
@@ -75,7 +76,7 @@ class le_net5(object):
             conv = self.__create_pool_layer(conv, pool_layer[0:-1], pool_layer[-1], 'pool'+str(index))
 
         #全连接
-        conv_shape = tf.shape(conv) #[batch, w, h, c]
+        conv_shape = tf.shape(conv).as_list() #[batch, w, h, c]
         full_input_node = reduce(lambda x, y: x*y, conv_shape[1:])
         full_input = tf.reshape(conv, shape=[conv_shape[0], full_input_node])
         full_node = self.__full_shape
