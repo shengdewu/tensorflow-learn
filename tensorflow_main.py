@@ -2,9 +2,10 @@ from tensorflow_case.tensorflow import tensorflow_case
 from tensorflow_case.tensor_neurons_case import bp_neural_networks
 from tensorflow_bpnn.tbp_neural import tbp_neural
 from mnist.load_mnist_data import mnist
+from lenet_5.lenet_5 import le_net5
 
 if __name__ == '__main__':
-    opt = 'bp'
+    opt = 'lenet-5'
 
     if opt == 'case':
         #case
@@ -16,7 +17,7 @@ if __name__ == '__main__':
 
     if opt == 'bp':
         #bp
-        mnist = mnist.load_mnist_data('tensorflow_case/mnist/data/')
+        mnist = mnist.load_mnist_data('mnist/data/')
         neural_network = tbp_neural(input_node=784,
                                     output_node=10,
                                     hide_node=[500],
@@ -27,4 +28,13 @@ if __name__ == '__main__':
                                     train_step=30000,
                                     moving_avgerage_decay=0.99)
         neural_network.train(mnist, 'tensorflow_case/mode/')
+
+    if opt == 'lenet-5':
+        le_net_5_mode = le_net5(input_node=784,
+                                input_shape=[28, 28, 1],
+                                full_shape=[512, 10],
+                                filter_list=[[5,5,1,32,1],[5,5,1,64,1]],
+                                filter_pool=[[2,2,2],[2,2,2]])
+        mnist = mnist.load_mnist_data('mnist/data/')
+        le_net_5_mode.create_mode(mnist)
 
