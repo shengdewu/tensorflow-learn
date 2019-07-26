@@ -3,7 +3,7 @@ from tensorflow_case.tensor_neurons_case import bp_neural_networks
 from tensorflow_bpnn.tbp_neural import tbp_neural
 from mnist.load_mnist_data import mnist
 from lenet_5.lenet_5 import le_net5
-
+from optimizer.gradient_descent import gradient_descent
 if __name__ == '__main__':
     opt = 'lenet-5'
 
@@ -30,12 +30,14 @@ if __name__ == '__main__':
         neural_network.train(mnist, 'tensorflow_case/mode/')
 
     if opt == 'lenet-5':
-        le_net_5_mode = le_net5(input_node=784,
-                                input_shape=[28, 28, 1],
+        le_net_5_mode = le_net5(input_shape=[28, 28, 1],
                                 full_shape=[512, 10],
                                 filter_list=[[5,5,1,32,1],[5,5,32,64,1]], #注意通道的赋值
                                 filter_pool=[[2,2,2],[2,2,2]],
-                                batch=100)
+                                batch=100,
+                                regularization_rate=0.00001)
         mnist = mnist.load_mnist_data('mnist/data/')
-        le_net_5_mode.create_mode(mnist)
+        x, logits, y = le_net_5_mode.create_cnn()
+        optimizer_mode = gradient_descent()
+        optimizer_mode.optimize(mnist, x, logits, y)
 

@@ -3,7 +3,14 @@ from functools import reduce
 import numpy as np
 
 class le_net5(object):
-    def __init__(self, input_node,input_shape, full_shape, filter_list, filter_pool, learn_rate=0.001, decay_rate=0.99, regularization_rate=0.01, batch=2000):
+    def __init__(self,
+                 input_shape,
+                 full_shape,
+                 filter_list,
+                 filter_pool,
+                 regularization_rate=0.01,
+                 batch=100,
+                 loses_name='loses'):
         '''
         :param input_shape: 第一个卷积层输入节点 [w,h,channel] 长,宽,通道
         :param full_shape: [n1,n2...] 全连接层每层的神经元个数
@@ -17,6 +24,8 @@ class le_net5(object):
         :param decay_rate:全连接的学习衰减率
         :param regularization_rate:全连接的正则化
         :param batch: 批处理大小
+        :param moving_decay: 滑动平均衰减率
+        :param loses_name:
         '''
         if not isinstance(full_shape, list):
             raise RuntimeError('filter type is not valid, need list type'.format(filter_list))
@@ -31,10 +40,9 @@ class le_net5(object):
         self.__full_shape = full_shape
         self.__filter_list = filter_list
         self.__filter_pool = filter_pool
-        self.__learn_rate = learn_rate
-        self.__decay_rate = decay_rate
         self.__regularization_rate = regularization_rate
         self.__batch = batch
+        self.__loses_name = loses_name
         return
 
     def __create_conv_layer(self, inputd, filter_shape, strides, scope):
@@ -50,12 +58,12 @@ class le_net5(object):
             pool = tf.nn.max_pool(value=inputd, ksize=[1, ksize[0], ksize[1], 1], strides=[1, strides, strides, 1], padding='SAME')
         return pool
 
-    def __create_full_connect_layer(self, inputd, wshape, bshape, scope, regularizer=None, dropout=False, active=True):
+    def __create_full_connect_layer(self, inputd, wshape, bshape, scope, regularizer=None, dropout=True, active=True):
         with tf.variable_scope(scope):
             weights = tf.get_variable(name='weight', shape=wshape, initializer=tf.truncated_normal_initializer(stddev=0.1))
             biases = tf.get_variable(name='biase', shape=[bshape], initializer=tf.constant_initializer(0.1))
             if regularizer is not None:
-                tf.add_to_collection('loses', regularizer(weights))
+                tf.add_to_collection(self.__loses_name, regularizer(weights))
             z = tf.matmul(inputd, weights) + biases
             a = z
             if active:
@@ -64,8 +72,8 @@ class le_net5(object):
                     a = tf.nn.dropout(a, 0.5)
         return a
 
-    def create_mode(self, mnist):
-        input_shape = self.__input_shape #[batch, w, h, c]
+    def create_cnn(self):
+        input_shape = self.__input_shape  #[batch, w, h, c]
         input_shape.insert(0, self.__batch)
         x = tf.placeholder(tf.float32, shape=input_shape, name='x-put')
 
@@ -87,35 +95,14 @@ class le_net5(object):
         x_full = full_input
         for index in range(len(full_node)-2):
             x_full = self.__create_full_connect_layer(x_full,
-                                                 [full_node[index], full_node[index+1]],
-                                                 full_node[index+1], 'full'+str(index),
-                                                 regularizer)
-        y_ = self.__create_full_connect_layer(x_full,
-                                              [full_node[-2], full_node[-1]],
-                                              full_node[-1], 'full-out',
-                                              regularizer, active=False)
+                                                      [full_node[index], full_node[index+1]],
+                                                      full_node[index+1], 'full'+str(index),
+                                                      regularizer)
+        logits = self.__create_full_connect_layer(x_full,
+                                                  [full_node[-2], full_node[-1]],
+                                                  full_node[-1], 'full-out',
+                                                  regularizer, active=False)
 
-        #滑动平均
-        global_step = tf.Variable(0, trainable=False)
-        variable_averges = tf.train.ExponentialMovingAverage(0.5, global_step)
-        variable_averges_op = variable_averges.apply(tf.trainable_variables())
+        y = tf.placeholder(tf.float32, shape=[None, self.__full_shape[-1]], name='y-put')
 
-        y = tf.placeholder(tf.float32, shape=[self.__batch, self.__full_shape[-1]], name='y-put')
-        cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=y_, labels=tf.arg_max(y, 1))
-        loss = tf.reduce_mean(cross_entropy) + tf.add_n(tf.get_collection('loses'))
-
-        learn_rate = tf.train.exponential_decay(self.__learn_rate, 0, mnist.train.num_examples /self.__batch, self.__decay_rate)
-        train_step = tf.train.GradientDescentOptimizer(learning_rate=learn_rate).minimize(loss, global_step)
-
-        with tf.control_dependencies([train_step, variable_averges_op]):
-            train_op = tf.no_op(name='train')
-
-        with tf.Session() as sess:
-            tf.initialize_all_variables().run()
-            for i in range(5000):
-                xs, ys = mnist.train.next_batch(self.__batch)
-                reshape_xs = np.reshape(xs, input_shape)
-                _, loss_value, step = sess.run([train_op, loss, global_step], feed_dict={x:reshape_xs, y:ys})
-                if i % 1000 == 0:
-                    print('after %d training step(s), loss on train batch is %g' % (step, loss_value))
-        return y_
+        return x, logits, y
