@@ -72,7 +72,7 @@ class le_net5(object):
                     a = tf.nn.dropout(a, 0.5)
         return a
 
-    def create_cnn(self):
+    def create_cnncreate_cnn(self):
         input_shape = self.__input_shape  #[batch, w, h, c]
         input_shape.insert(0, self.__batch)
         x = tf.placeholder(tf.float32, shape=input_shape, name='x-put')
