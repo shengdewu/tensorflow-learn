@@ -37,7 +37,7 @@ if __name__ == '__main__':
                                 batch=100,
                                 regularization_rate=0.00001)
         mnist = mnist.load_mnist_data('mnist/data/')
-        x, logits, y = le_net_5_mode.create_cnn()
+        x, logits, y = le_net_5_mode.create_cnncreate_cnn()
         optimizer_mode = gradient_descent()
         optimizer_mode.optimize(mnist, x, logits, y)
 
