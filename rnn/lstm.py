@@ -42,11 +42,7 @@ class LSTM(object):
         y = tf.matmul(out_input, outout_weight[0]) + outout_weight[1]
         return y, state
 
-    def _batch_data(self):
-
-        return
-
-    def train(self):
+    def train(self, next_batch_data):
         '''
         x (batch_size, time_step, n_input)
         :return:
@@ -55,6 +51,6 @@ class LSTM(object):
         y = tf.placeholder(dtype=tf.float32, shape=[None, self.__time_step, self.__out_num])
         y1, s = self._build_network(x)
         optimize = gradient_descent()
-        optimize.generalization_optimize(self._batch_data, x=x, logits=y1, y=y)
+        optimize.generalization_optimize(next_batch_data, x=x, logits=y1, y=y)
         return
 
