@@ -4,9 +4,9 @@ from tensorflow_bpnn.tbp_neural import tbp_neural
 from mnist.load_mnist_data import mnist
 from lenet_5.lenet_5 import le_net5
 from optimizer.gradient_descent import gradient_descent
+
 if __name__ == '__main__':
     opt = 'lenet-5'
-
     if opt == 'case':
         #case
         tensorflow_test = tensorflow_case()

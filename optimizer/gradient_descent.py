@@ -47,3 +47,29 @@ class gradient_descent(object):
                 if i % 1000 == 0:
                     print('after %d training step(s), loss on train batch is %g' % (step, loss_value))
         return
+
+    def generalization_optimize(self, batch_data, x, logits, y):
+        # 滑动平均
+        global_step = tf.Variable(0, trainable=False)
+        variable_averges = tf.train.ExponentialMovingAverage(self.__moving_decay, global_step)
+        variable_averges_op = variable_averges.apply(tf.trainable_variables())
+
+        cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=tf.arg_max(y, 1))
+        loss = tf.reduce_mean(cross_entropy)
+
+        learn_rate = tf.train.exponential_decay(self.__learn_rate,
+                                                0,
+                                                self.__decay_rate, staircase=False)
+        train_step = tf.train.GradientDescentOptimizer(learning_rate=learn_rate).minimize(loss, global_step)
+
+        with tf.control_dependencies([train_step, variable_averges_op]):
+            train_op = tf.no_op(name='train')
+
+        with tf.Session() as sess:
+            tf.initialize_all_variables().run()
+            for i in range(self.__train_step):
+                xs, ys = batch_data
+                _, loss_value, step = sess.run([train_op, loss, global_step], feed_dict={x: xs, y: ys})
+                if i % 1000 == 0:
+                    print('after %d training step(s), loss on train batch is %g' % (step, loss_value))
+        return

@@ -1,4 +1,5 @@
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
 
 class cnn_case(object):
     def __init__(self):
@@ -20,5 +21,12 @@ class cnn_case(object):
 
         pool = tf.nn.max_pool(value=active_conv, ksize=[1,3,3,1], strides=[1,2,2,1],padding='SAME')
 
+
+        return
+
+    def test_slim(self):
+        weight = slim.variable(name='weights', shape=[10*10*2*3],
+                               initializer=tf.truncated_normal_initializer(stddev=0.1),
+                               regularizer=slim.l2_regularizer(0.05))
 
         return
