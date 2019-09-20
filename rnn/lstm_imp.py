@@ -10,7 +10,7 @@ class LSTM_IMPL(object):
         self.__time_step = 10
         self.__out_num = 1
         self.__hide_num = [15]
-        self.__batch_size = 60
+        self.__batch_size = 13
         self.__lstm_mode = LSTM(len(self.__feature_col), self.__time_step, self.__out_num, self.__hide_num,self.__batch_size)
         return
 

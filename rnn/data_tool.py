@@ -26,6 +26,8 @@ class data_frame(object):
         data_array = []
         label_array = []
         for i in range(0,data_frame.shape[0], self.__time_step):
+            if i+self.__time_step > data_frame.shape[0]:
+                break
             data = data_frame.iloc[i:i+self.__time_step].loc[:, self.__feature_column].to_numpy().tolist()
             label = data_frame.iloc[i:i + self.__time_step].loc[:, self.__label_colum].to_numpy().reshape(self.__time_step, 1).tolist()
             data_array.append(data)
@@ -33,7 +35,7 @@ class data_frame(object):
         return data_array, label_array
 
     def next_batch(self):
-        if self.__next_batch + self.__batch_size < len(self.__data[0]):
+        if self.__next_batch + self.__batch_size > len(self.__data[0]):
             self.__next_batch = 0
         data = np.array(self.__data[0][self.__next_batch:self.__next_batch+self.__batch_size])
         label = np.array(self.__data[1][self.__next_batch:self.__next_batch + self.__batch_size])
