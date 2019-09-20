@@ -4,9 +4,15 @@ from tensorflow_bpnn.tbp_neural import tbp_neural
 from mnist.load_mnist_data import mnist
 from lenet_5.lenet_5 import le_net5
 from optimizer.gradient_descent import gradient_descent
+from rnn.lstm_imp import LSTM_IMPL
+import argparse
 
 if __name__ == '__main__':
-    opt = 'lenet-5'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--option', default='lenet-5', type=str)
+    args = parser.parse_args()
+    opt = args.option
+
     if opt == 'case':
         #case
         tensorflow_test = tensorflow_case()
@@ -40,4 +46,8 @@ if __name__ == '__main__':
         x, logits, y = le_net_5_mode.create_cnncreate_cnn()
         optimizer_mode = gradient_descent()
         optimizer_mode.optimize(mnist, x, logits, y)
+
+    if opt == 'lstm':
+        lstm = LSTM_IMPL()
+        lstm.excute('E:/data_warehouse/collision_warehouse/lstm/lstm-label.csv')
 
