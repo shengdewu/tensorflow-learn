@@ -19,17 +19,13 @@ class data_frame(object):
         data_frame = pd.read_csv(self.__path, engine='c', usecols=use_col, encoding='gbk')
         label = data_frame.loc[:,self.__label_colum]
         median = data_frame.loc[:,self.__feature_column].median(axis=0)
-        mean = data_frame.mean(axis=0)
-        std = data_frame.std(axis=0)
-
-        data_frame_tmp = (data_frame - mean) / std
+        data_frame_tmp = data_frame.loc[:,self.__feature_column] / median
         del data_frame
         data_frame = data_frame_tmp
+        data_frame.insert(data_frame.shape[1], column=self.__label_colum, value=label)
         data_array = []
         label_array = []
         for i in range(0,data_frame.shape[0], self.__time_step):
-            if self.__time_step + i > data_frame.shape[0]:
-                break
             data = data_frame.iloc[i:i+self.__time_step].loc[:, self.__feature_column].to_numpy().tolist()
             label = data_frame.iloc[i:i + self.__time_step].loc[:, self.__label_colum].to_numpy().reshape(self.__time_step, 1).tolist()
             data_array.append(data)
