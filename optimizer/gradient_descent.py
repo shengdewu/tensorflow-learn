@@ -82,7 +82,7 @@ class gradient_descent(object):
                     print('after %d training step(s), loss on train batch is %g' % (step, loss_value))
         return
 
-    def generalization_predict(self, next_data, x, logits, y):
+    def generalization_predict(self, next_data, x, logits):
         predict_result = None
         saver = tf.train.Saver()
         with tf.Session() as sess:
@@ -93,7 +93,8 @@ class gradient_descent(object):
             while test_data is not None:
                 xs = test_data[0]
                 ys = test_data[1]
-                p = sess.run(logits, feed_dict={x:xs, y:ys})
+                print('xs.shape {}, x.shape {}, ys.shape {}, logits.shape{}\n'.format(xs.shape, x.shape, ys.shape, logits.shape))
+                p = sess.run(logits, feed_dict={x:xs})
                 x1 = np.reshape(xs, [-1])
                 y1 = np.reshape(ys, [-1])
                 p1 = np.reshape(p, [-1])

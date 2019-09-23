@@ -1,8 +1,11 @@
 import pandas as pd
 import numpy as np
 import logging
+import os
+import re
+
 class data_frame(object):
-    def __init__(self, path, batch_size, time_step, feature_column, label_colum, time_step_column):
+    def __init__(self, path, batch_size, time_step, feature_column, label_colum, time_step_column, fileter_key):
         self.__batch_size = batch_size
         self.__time_step = time_step
         self.__next_batch = 0
@@ -11,11 +14,39 @@ class data_frame(object):
         self.__path = path
         self.__index = 0
         self.__time_step_column = time_step_column
+        self.__filter_key = fileter_key
         self.__data = self._convert_list()
         return
 
+    def _seek_data_source_file(self,data_source_path, filter_key, pos=1):
+        '''
+        :param data_source_path:  数据源路径
+        :param filter_key: 数据源包含字符串
+        :param pos: 匹配位置 0 开始，1，任意
+        :return: 文件列表
+        '''
+
+        pattern = re.compile(filter_key)
+
+        data_source_list = os.listdir(data_source_path)
+        data_sourc = []
+        for data_source_name in data_source_list:
+            source_name = data_source_path + '/' + data_source_name
+            if not os.path.isfile(source_name):
+                continue
+            if pos == 0:
+                if pattern.match(data_source_name) is None:
+                    continue
+            else:
+                if pattern.search(data_source_name) is None:
+                    continue
+            data_sourc.append(source_name)
+        return data_sourc
+
     def _append_data(self, data, data_array, label_array):
         label = data.loc[:, self.__label_colum]
+        print(label.dtype)
+        label.replace(-2, 0, inplace=True)
         median = data.loc[:, self.__feature_column].median(axis=0)
         data = data.loc[:, self.__feature_column] / (median + 1)
         data_array.append(data.to_numpy())
@@ -26,19 +57,23 @@ class data_frame(object):
         use_col = self.__feature_column.copy()
         use_col.append(self.__label_colum)
         use_col.append(self.__time_step_column)
-        df = pd.read_csv(self.__path, engine='c', usecols=use_col, encoding='gbk')
         data_array = []
         label_array = []
-        for dg in df.groupby(by=self.__time_step_column):
-            datag = dg[1].drop(columns=[self.__time_step_column])
-            if self.__time_step != datag.shape[0]:
-                logging.warning('time step not equal{}-{}'.format(self.__time_step, datag.shape[0]))
-                datag.index = [x for x in range(datag.shape[0])]
-                for index in range(0, datag.shape[0], self.__time_step):
-                    d = datag.iloc[index: index+self.__time_step]
-                    self._append_data(d, data_array, label_array)
-            else:
-                self._append_data(datag, data_array, label_array)
+        file_list = self._seek_data_source_file(self.__path, self.__filter_key)
+        logging.debug('featch from {}'.format(file_list))
+        for fl in file_list:
+            df = pd.read_csv(fl, engine='c', usecols=use_col, encoding='gbk')
+            df = df.loc[(df[self.__label_colum] == 1) | (df[self.__label_colum] == 0)]
+            for dg in df.groupby(by=self.__time_step_column):
+                datag = dg[1].drop(columns=[self.__time_step_column])
+                if self.__time_step != datag.shape[0]:
+                    logging.warning('time step not equal{}-{}'.format(self.__time_step, datag.shape[0]))
+                    datag.index = [x for x in range(datag.shape[0])]
+                    for index in range(0, datag.shape[0], self.__time_step):
+                        d = datag.iloc[index: index+self.__time_step]
+                        self._append_data(d, data_array, label_array)
+                else:
+                    self._append_data(datag, data_array, label_array)
 
         return data_array, label_array
 

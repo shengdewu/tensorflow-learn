@@ -11,7 +11,7 @@ class LSTM(object):
         :param hide_num: 隐藏层个数 list[10, 23, 10] 每个元素代表每层rnn细胞个数
         :param batch_size:
         '''
-        if not isinstance(hide_num, list):
+        if not isinstance(hide_num, tuple):
             raise RuntimeError('invalid hide_num: the tyoe must be list ')
         self.__hide_num = hide_num
         self.__input_num = input_num
@@ -60,9 +60,8 @@ class LSTM(object):
 
     def predict(self, next_test_data, predict_mode):
         x = tf.placeholder(dtype=tf.float32, shape=[None, self.__time_step, self.__input_num])
-        y = tf.placeholder(dtype=tf.float32, shape=[None, self.__time_step, self.__out_num])
         y1, s = self._build_network(x)
-        predict_mode(next_test_data, x=x, logits=y1, y=y)
+        predict_mode(next_test_data, x=x, logits=y1)
         return
 
 

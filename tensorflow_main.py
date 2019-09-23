@@ -7,9 +7,26 @@ from optimizer.gradient_descent import gradient_descent
 from rnn.lstm_imp import LSTM_IMPL
 import argparse
 
+def str2bool(v):
+    if v == 'False':
+        return False
+    else:
+        return True
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--option', default='lenet-5', type=str)
+    parser.add_argument('--root_path', default='E:/data_warehouse/collision_warehouse/lstm', type=str)
+    parser.add_argument('--file_key', default='label-lstm', type=str)
+    parser.add_argument('--log_path', default='./lstm-log', type=str)
+    parser.add_argument('--batch_size', default=20, type=int)
+    parser.add_argument('--time_step', default=22, type=int)
+    parser.add_argument('--out_num', default=1, type=int)
+    parser.add_argument('--hide_num', default=(12,), type=int, nargs='+')
+    parser.add_argument('--feature_col', default=('speed', 'acceleration', 'accelerationX', 'accelerationY', 'accelerationZ'), type=str, nargs='+')
+    parser.add_argument('--label_col', default='flag', type=str)
+    parser.add_argument('--time_step_column', default='flagtime', type=str)
+    parser.add_argument('--train', default=True, type=str2bool)
     args = parser.parse_args()
     opt = args.option
 
@@ -48,6 +65,14 @@ if __name__ == '__main__':
         optimizer_mode.optimize(mnist, x, logits, y)
 
     if opt == 'lstm':
-        lstm = LSTM_IMPL('./lstm-log')
-        lstm.excute('E:/data_warehouse/collision_warehouse/lstm/gzip-label-lstm-0.csv')
+        lstm = LSTM_IMPL(log_path=args.log_path,
+                         file_key=args.file_key,
+                         batch_size=args.batch_size,
+                         time_step=args.time_step,
+                         out_num=args.out_num,
+                         hide_num=args.hide_num,
+                         feature_col=args.feature_col,
+                         label_col=args.label_col,
+                         time_step_column=args.time_step_column)
+        lstm.excute(args.root_path, args.train)
 
