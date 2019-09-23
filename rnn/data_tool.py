@@ -45,7 +45,6 @@ class data_frame(object):
 
     def _append_data(self, data, data_array, label_array):
         label = data.loc[:, self.__label_colum]
-        print(label.dtype)
         label.replace(-2, 0, inplace=True)
         median = data.loc[:, self.__feature_column].median(axis=0)
         data = data.loc[:, self.__feature_column] / (median + 1)
