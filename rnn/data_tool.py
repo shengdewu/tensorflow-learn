@@ -15,8 +15,12 @@ class data_frame(object):
         self.__index = 0
         self.__time_step_column = time_step_column
         self.__filter_key = fileter_key
+        self.__max_step = 0
         self.__data = self._convert_list()
         return
+
+    def get_train_step(self):
+        return self.__max_step
 
     def _seek_data_source_file(self,data_source_path, filter_key, pos=1):
         '''
@@ -46,8 +50,9 @@ class data_frame(object):
     def _append_data(self, data, data_array, label_array):
         label = data.loc[:, self.__label_colum]
         label.replace(-2, 0, inplace=True)
-        median = data.loc[:, self.__feature_column].median(axis=0)
-        data = data.loc[:, self.__feature_column] / (median + 1)
+        vmin = data.loc[:, self.__feature_column].min(axis=0)
+        vmax = data.loc[:, self.__feature_column].max(axis=0)
+        data = (data.loc[:, self.__feature_column]-vmin) / (vmax - vmin)
         data_array.append(data.to_numpy())
         label_array.append(label.to_numpy().reshape(self.__time_step, 1))
         return
@@ -58,27 +63,26 @@ class data_frame(object):
         use_col.append(self.__time_step_column)
         data_array = []
         label_array = []
-        file_list = self._seek_data_source_file(self.__path, self.__filter_key)
-        logging.debug('featch from {}'.format(file_list))
-        for fl in file_list:
-            df = pd.read_csv(fl, engine='c', usecols=use_col, encoding='gbk')
-            df = df.loc[(df[self.__label_colum] == 1) | (df[self.__label_colum] == 0)]
-            for dg in df.groupby(by=self.__time_step_column):
-                datag = dg[1].drop(columns=[self.__time_step_column])
-                if self.__time_step != datag.shape[0]:
-                    logging.warning('time step not equal{}-{}'.format(self.__time_step, datag.shape[0]))
-                    datag.index = [x for x in range(datag.shape[0])]
-                    for index in range(0, datag.shape[0], self.__time_step):
-                        d = datag.iloc[index: index+self.__time_step]
-                        self._append_data(d, data_array, label_array)
-                else:
-                    self._append_data(datag, data_array, label_array)
-        print('total : {}'.format(len(data_array)))
+        df = pd.read_csv(self.__path, engine='c', usecols=use_col, encoding='gbk')
+        df = df.loc[(df[self.__label_colum] == 1) | (df[self.__label_colum] == 0)]
+        for dg in df.groupby(by=self.__time_step_column):
+            datag = dg[1].drop(columns=[self.__time_step_column])
+            if self.__time_step != datag.shape[0]:
+                logging.warning('time step not equal{}-{}'.format(self.__time_step, datag.shape[0]))
+                datag.index = [x for x in range(datag.shape[0])]
+                for index in range(0, datag.shape[0], self.__time_step):
+                    d = datag.iloc[index: index+self.__time_step]
+                    self._append_data(d, data_array, label_array)
+            else:
+                self._append_data(datag, data_array, label_array)
+        self.__max_step = len(data_array) // self.__batch_size
+        print('total : {}-{}'.format(len(data_array), self.__max_step))
         return data_array, label_array
 
     def next_batch(self):
         if self.__next_batch + self.__batch_size > len(self.__data[0]):
             self.__next_batch = 0
+            print('over data')
         data = np.array(self.__data[0][self.__next_batch:self.__next_batch+self.__batch_size])
         label = np.array(self.__data[1][self.__next_batch:self.__next_batch + self.__batch_size])
         self.__next_batch += self.__batch_size

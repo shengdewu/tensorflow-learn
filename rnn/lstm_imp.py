@@ -31,7 +31,7 @@ class LSTM_IMPL(object):
 
     def excute(self, path, train=True):
         data_parse = data_frame(path, self.__batch_size, self.__time_step, self.__feature_col, self.__label_col, self.__time_step_column, self.__filter_key)
-        optimize = gradient_descent(train_step=200, mode_path='./model/')
+        optimize = gradient_descent(train_step=data_parse.get_train_step(), mode_path='./model/')
         if train:
             logging.debug('start train...')
             self.__lstm_mode.train(data_parse.next_batch, optimize.generalization_optimize)

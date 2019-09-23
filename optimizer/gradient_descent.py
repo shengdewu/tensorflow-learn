@@ -59,7 +59,7 @@ class gradient_descent(object):
         cross_entropy = tf.square(tf.reshape(logits, [-1]) - tf.reshape(y,[-1]))
         loss = tf.reduce_mean(cross_entropy)
         learn_rate = tf.train.exponential_decay(self.__learn_rate,
-                                                0,
+                                                global_step,
                                                 logits.shape[0],
                                                 self.__decay_rate, staircase=False)
         train_step = tf.train.GradientDescentOptimizer(learning_rate=learn_rate).minimize(loss, global_step)
