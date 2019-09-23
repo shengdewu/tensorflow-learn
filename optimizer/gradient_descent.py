@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import logging
 
 class gradient_descent(object):
     def __init__(self,
@@ -73,6 +74,7 @@ class gradient_descent(object):
             tf.global_variables_initializer().run()
             for i in range(self.__train_step):
                 xs, ys = batch_data()
+                logging.debug('xs.shape {}, x.shape {}, ys.shape {}, y.shape{}\n'.format(xs.shape, x.shape, ys.shape, y.shape))
                 _, loss_value, step = sess.run([train_op, loss, global_step], feed_dict={x: xs, y: ys})
                 if i % print_log_num == 0:
                     if self.__mode_path is not None:

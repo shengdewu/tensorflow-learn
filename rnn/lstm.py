@@ -8,7 +8,7 @@ class LSTM(object):
         :param input_num: 输入节点必须是特征个数
         :param time_step: 时间序列个数
         :param out_num: 输出层个数
-        :param hide_num: 隐藏层个数 list[10, 23, 10] 每个元素代表没层rnn细胞个数
+        :param hide_num: 隐藏层个数 list[10, 23, 10] 每个元素代表每层rnn细胞个数
         :param batch_size:
         '''
         if not isinstance(hide_num, list):
@@ -32,7 +32,12 @@ class LSTM(object):
         input_rnn = tf.matmul(input_rnn, input_weight[0]) + input_weight[1]
 
         input_rnn = tf.reshape(input_rnn, [-1, self.__time_step, self.__hide_num[0]])
-        cell = trnn.LSTMCell(self.__hide_num[0], state_is_tuple=True)
+        cell = None
+        if len(self.__hide_num) > 1:
+            cells = [trnn.LSTMCell(unint, state_is_tuple=True) for unint in self.__hide_num]
+            cell = trnn.MultiRNNCell(cells)
+        else:
+            cell = trnn.LSTMCell(self.__hide_num[0], state_is_tuple=True)
         state = cell.zero_state(self.__batch_size, tf.float32)
         input_rnn, state = tf.nn.dynamic_rnn(cell, input_rnn, initial_state=state)
 

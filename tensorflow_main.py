@@ -48,6 +48,6 @@ if __name__ == '__main__':
         optimizer_mode.optimize(mnist, x, logits, y)
 
     if opt == 'lstm':
-        lstm = LSTM_IMPL()
-        lstm.excute('E:/data_warehouse/collision_warehouse/lstm/lstm-label.csv')
+        lstm = LSTM_IMPL('./lstm-log')
+        lstm.excute('E:/data_warehouse/collision_warehouse/lstm/gzip-label-lstm-0.csv')
 
