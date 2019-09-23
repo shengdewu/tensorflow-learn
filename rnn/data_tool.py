@@ -73,7 +73,7 @@ class data_frame(object):
                         self._append_data(d, data_array, label_array)
                 else:
                     self._append_data(datag, data_array, label_array)
-
+        print('total : {}'.format(len(data_array)))
         return data_array, label_array
 
     def next_batch(self):
