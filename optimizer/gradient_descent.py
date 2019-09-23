@@ -72,14 +72,20 @@ class gradient_descent(object):
         with tf.Session() as sess:
             print_log_num = self.__train_step // 100
             tf.global_variables_initializer().run()
+            min_err = 1e10
+            min_step = 0
             for i in range(self.__train_step):
                 xs, ys = batch_data()
                 logging.debug('xs.shape {}, x.shape {}, ys.shape {}, y.shape{}\n'.format(xs.shape, x.shape, ys.shape, y.shape))
                 _, loss_value, step = sess.run([train_op, loss, global_step], feed_dict={x: xs, y: ys})
                 if i % print_log_num == 0:
                     if self.__mode_path is not None:
-                        saver.save(sess, save_path=self.__mode_path)
+                        if min_err > loss_value:
+                            min_err = loss_value
+                            min_step = step
+                            saver.save(sess, save_path=self.__mode_path)
                     print('after %d training step(s), loss on train batch is %g' % (step, loss_value))
+            print('optimize %d training step(s), loss on train batch is %g' % (min_step, min_err))
         return
 
     def generalization_predict(self, next_data, x, logits):
