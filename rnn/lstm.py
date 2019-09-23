@@ -61,7 +61,6 @@ class LSTM(object):
     def predict(self, next_test_data, predict_mode):
         x = tf.placeholder(dtype=tf.float32, shape=[None, self.__time_step, self.__input_num])
         y1, s = self._build_network(x)
-        predict_mode(next_test_data, x=x, logits=y1)
-        return
+        return predict_mode(next_test_data, x=x, logits=y1)
 
 

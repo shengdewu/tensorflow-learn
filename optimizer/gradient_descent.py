@@ -95,20 +95,18 @@ class gradient_descent(object):
                 ys = test_data[1]
                 print('xs.shape {}, x.shape {}, ys.shape {}, logits.shape{}\n'.format(xs.shape, x.shape, ys.shape, logits.shape))
                 p = sess.run(logits, feed_dict={x:xs})
-                x1 = np.reshape(xs, [-1])
-                y1 = np.reshape(ys, [-1])
-                p1 = np.reshape(p, [-1])
+                xcol = xs.shape[-1]
+                ycol = ys.shape[-1]
+                x1 = np.reshape(xs, [-1, xcol])
+                y1 = np.reshape(ys, [-1, ycol])
+                p1 = np.reshape(p, [-1, ycol])
+                y = np.concatenate((y1, p1), axis=1)
 
-                loss = np.sum(y1 == p1)
-                loss = loss / y1.shape[0]
-                print('test {}'.format(loss))
-                #
-                # td = np.concatenate((x1, y1), axis=1)
-                # if predict_result is None:
-                #     predict_result = np.concatenate((td, p1), axis=1)
-                # else:
-                #     t = np.concatenate((td, p1), axis=1)
-                #     predict_result = np.concatenate((predict_result, t), axis=0)
+                if predict_result is None:
+                    predict_result = np.concatenate((x1, y), axis=1)
+                else:
+                    t = np.concatenate((x1, y), axis=1)
+                    predict_result = np.concatenate((predict_result, t), axis=0)
 
                 test_data = next_data()
         return predict_result

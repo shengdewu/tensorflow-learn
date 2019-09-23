@@ -3,6 +3,7 @@ from rnn.lstm import LSTM
 from optimizer.gradient_descent import gradient_descent
 from log.log_configure import log_configure
 import logging
+import pandas as pd
 
 class LSTM_IMPL(object):
     def __init__(self,
@@ -36,6 +37,10 @@ class LSTM_IMPL(object):
             self.__lstm_mode.train(data_parse.next_batch, optimize.generalization_optimize)
         else:
             logging.debug('start test...')
-            self.__lstm_mode.predict(data_parse.next_test, optimize.generalization_predict)
-
+            predict = self.__lstm_mode.predict(data_parse.next_test, optimize.generalization_predict)
+            col = self.__feature_col.copy()
+            col.append(self.__label_col)
+            col.append('predict')
+            predict_frame = pd.DataFrame(data=predict, columns=col)
+            predict_frame.to_csv(path + '/predict.csv', index=False)
         return
