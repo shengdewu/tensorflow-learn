@@ -8,19 +8,25 @@ class gradient_descent(object):
                  decay_rate=0.99,
                  moving_decay=0.99,
                  train_step=50000,
-                 mode_path=None):
+                 mode_path=None,
+                 save_freq=100,
+                 batch_size=100):
         '''
         :param learn_rate: 全连接的学习率
         :param decay_rate:全连接的学习衰减率
         :param moving_decay: 滑动平均衰减率
         :param train_step: 迭代次数
         :param mode_path:保存训练模型
+        :param save_freq: 模型保存频率
+        :param batch_size: 批处理大小
         '''
         self.__learn_rate = learn_rate
         self.__decay_rate = decay_rate
         self.__moving_decay = moving_decay
         self.__train_step = train_step
         self.__mode_path = mode_path
+        self.__save_freq = save_freq
+        self.__batch_size = batch_size
         return
 
     def optimize(self, mnist, x, logits, y, loses_name='loses'):
@@ -70,15 +76,16 @@ class gradient_descent(object):
         #持久化
         saver = tf.train.Saver()
         with tf.Session() as sess:
-            print_log_num = self.__train_step // 100
             tf.global_variables_initializer().run()
             min_err = 1e10
             min_step = 0
             for i in range(self.__train_step):
-                xs, ys = batch_data()
-                logging.debug('xs.shape {}, x.shape {}, ys.shape {}, y.shape{}\n'.format(xs.shape, x.shape, ys.shape, y.shape))
+                xs, ys = batch_data(self.__batch_size)
+                if xs is None:
+                    logging.warning('{} step(s) the data has been obtained!'.format(i))
+                    break
                 _, loss_value, step = sess.run([train_op, loss, global_step], feed_dict={x: xs, y: ys})
-                if i % print_log_num == 0:
+                if i % self.__save_freq == 0:
                     if self.__mode_path is not None:
                         if min_err > loss_value:
                             min_err = loss_value
@@ -95,11 +102,8 @@ class gradient_descent(object):
             tf.global_variables_initializer().run()
             saver.restore(sess, self.__mode_path)
 
-            test_data = next_data()
-            while test_data is not None:
-                xs = test_data[0]
-                ys = test_data[1]
-                print('xs.shape {}, x.shape {}, ys.shape {}, logits.shape{}\n'.format(xs.shape, x.shape, ys.shape, logits.shape))
+            xs, ys = next_data(self.__batch_size)
+            while xs is not None:
                 p = sess.run(logits, feed_dict={x:xs})
                 xcol = xs.shape[-1]
                 ycol = ys.shape[-1]
@@ -109,11 +113,10 @@ class gradient_descent(object):
                 y = np.concatenate((y1, p1), axis=1)
 
                 if predict_result is None:
-                    predict_result = np.concatenate((x1, y), axis=1)
+                    predict_result = y
                 else:
-                    t = np.concatenate((x1, y), axis=1)
-                    predict_result = np.concatenate((predict_result, t), axis=0)
+                    predict_result = np.concatenate((predict_result, y), axis=0)
 
-                test_data = next_data()
+                xs, ys = next_data(self.__batch_size)
         return predict_result
 

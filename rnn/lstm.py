@@ -41,10 +41,13 @@ class LSTM(object):
         state = cell.zero_state(self.__batch_size, tf.float32)
         input_rnn, state = tf.nn.dynamic_rnn(cell, input_rnn, initial_state=state)
 
-        out_input = tf.reshape(input_rnn, [-1, self.__hide_num[-1]])
-        outout_weight = self._init_weight('output', self.__hide_num[-1], self.__out_num)
-        y = tf.matmul(out_input, outout_weight[0]) + outout_weight[1]
-        y = tf.reshape(y,[-1, self.__time_step, self.__out_num])
+        '''
+        state 是lstm 最后一个cell的输出状态 因为lstm的输出有两个[ct,ht] 所以 state = [2, batch_size, cell_out_size]
+        '''
+        out_input = state[0]
+        output_weight = self._init_weight('output', self.__hide_num[-1], self.__out_num)
+        y = tf.matmul(out_input, output_weight[0]) + output_weight[1]
+        y = tf.reshape(y,[-1, self.__out_num])
         return y, state
 
     def train(self, next_batch_data, optimize):
@@ -53,7 +56,7 @@ class LSTM(object):
         :return:
         '''
         x = tf.placeholder(dtype=tf.float32, shape=[None, self.__time_step, self.__input_num])
-        y = tf.placeholder(dtype=tf.float32, shape=[None, self.__time_step, self.__out_num])
+        y = tf.placeholder(dtype=tf.float32, shape=[None, self.__out_num])
         y1, s = self._build_network(x)
         optimize(next_batch_data, x=x, logits=y1, y=y)
         return

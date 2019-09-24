@@ -24,21 +24,21 @@ class LSTM_IMPL(object):
         self.__hide_num = hide_num#[15]
         self.__batch_size = batch_size#1
         self.__time_step_column = time_step_column#'flagtime'
-        self.__filter_key = file_key#'lstm-[0-9]'
+        self.__file_key = file_key#'lstm-[0-9]'
         logging.info('start init lstm use feature_col {}, label_col {}, time_step {}, out_num {}, hide_num {}, batch_size {}, time_step_column {}, file_key {}'.format(feature_col, label_col, time_step, out_num, hide_num, batch_size, time_step_column, file_key))
         self.__lstm_mode = LSTM(len(self.__feature_col), self.__time_step, self.__out_num, self.__hide_num, self.__batch_size)
         return
 
     def excute(self, path, train=True):
-        data_parse = data_frame(path, self.__batch_size, self.__time_step, self.__feature_col, self.__label_col, self.__time_step_column, self.__filter_key)
-        optimize = gradient_descent(train_step=data_parse.get_train_step(), mode_path='./model/')
+        data_parse = data_frame(path, self.__time_step, self.__feature_col, self.__label_col, self.__time_step_column, self.__file_key)
+        optimize = gradient_descent(mode_path='./model/', batch_size=self.__batch_size, save_freq=1)
         if train:
             logging.debug('start train...')
             self.__lstm_mode.train(data_parse.next_batch, optimize.generalization_optimize)
         else:
             logging.debug('start test...')
-            predict = self.__lstm_mode.predict(data_parse.next_test, optimize.generalization_predict)
-            col = self.__feature_col.copy()
+            predict = self.__lstm_mode.predict(data_parse.next_batch, optimize.generalization_predict)
+            col = list()
             col.append(self.__label_col)
             col.append('predict')
             predict_frame = pd.DataFrame(data=predict, columns=col)
