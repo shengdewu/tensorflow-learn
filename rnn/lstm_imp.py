@@ -15,7 +15,8 @@ class LSTM_IMPL(object):
                  hide_num=(15, 10),
                  feature_col=('speed', 'acceleration', 'accelerationX', 'accelerationY', 'accelerationZ'),
                  label_col='flag',
-                 time_step_column='flagtime'):
+                 time_step_column='flagtime',
+                 mode_path='./mode/checkout'):
         log_configure.init_log(log_name='lstm', log_path=log_path)
         self.__feature_col = list(feature_col)#['speed', 'acceleration', 'accelerationX', 'accelerationY', 'accelerationZ']
         self.__label_col = label_col#'flag'
@@ -25,13 +26,14 @@ class LSTM_IMPL(object):
         self.__batch_size = batch_size#1
         self.__time_step_column = time_step_column#'flagtime'
         self.__file_key = file_key#'lstm-[0-9]'
+        self.__mode_path = mode_path
         logging.info('start init lstm use feature_col {}, label_col {}, time_step {}, out_num {}, hide_num {}, batch_size {}, time_step_column {}, file_key {}'.format(feature_col, label_col, time_step, out_num, hide_num, batch_size, time_step_column, file_key))
         self.__lstm_mode = LSTM(len(self.__feature_col), self.__time_step, self.__out_num, self.__hide_num, self.__batch_size)
         return
 
     def excute(self, path, train=True):
         data_parse = data_frame(path, self.__time_step, self.__feature_col, self.__label_col, self.__time_step_column, self.__file_key)
-        optimize = gradient_descent(mode_path='./model/', batch_size=self.__batch_size, save_freq=1)
+        optimize = gradient_descent(mode_path=self.__mode_path, batch_size=self.__batch_size, save_freq=1)
         if train:
             logging.debug('start train...')
             self.__lstm_mode.train(data_parse.next_batch, optimize.generalization_optimize)

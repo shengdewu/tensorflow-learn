@@ -26,6 +26,7 @@ if __name__ == '__main__':
     parser.add_argument('--feature_col', default=('speed', 'acceleration', 'accelerationX', 'accelerationY', 'accelerationZ'), type=str, nargs='+')
     parser.add_argument('--label_col', default='flag', type=str)
     parser.add_argument('--time_step_column', default='flagtime', type=str)
+    parser.add_argument('--mode_path', default='./mode_path/checkout', type=str)
     parser.add_argument('--train', default=True, type=str2bool)
     args = parser.parse_args()
     opt = args.option
