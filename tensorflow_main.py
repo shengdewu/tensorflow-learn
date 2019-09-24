@@ -71,7 +71,7 @@ if __name__ == '__main__':
                          batch_size=args.batch_size,
                          time_step=args.time_step,
                          out_num=args.out_num,
-                         hide_num=args.hide_num,
+                         hide_num=tuple(args.hide_num),
                          feature_col=args.feature_col,
                          label_col=args.label_col,
                          time_step_column=args.time_step_column)

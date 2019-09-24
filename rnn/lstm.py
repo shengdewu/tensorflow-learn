@@ -8,7 +8,7 @@ class LSTM(object):
         :param input_num: 输入节点必须是特征个数
         :param time_step: 时间序列个数
         :param out_num: 输出层个数
-        :param hide_num: 隐藏层个数 list[10, 23, 10] 每个元素代表每层rnn细胞个数
+        :param hide_num: 隐藏层个数 list[10, 10, 10] 每个元素代表每层rnn细胞个数 每层隐藏层必须一样
         :param batch_size:
         '''
         if not isinstance(hide_num, tuple):
@@ -45,7 +45,10 @@ class LSTM(object):
         1.state 是lstm 最后一个cell的输出状态 因为lstm的输出有两个[ct,ht] 所以 state = [2, batch_size, cell_out_size]
         2. 把 input_rnn 转换成 [batch, out_num]*step 选用最后一个 input_rnn = tf.unstack(tf.transpose(input_rnn, [1,0,2]))
         '''
-        out_input = state[1]
+        if len(self.__hide_num) > 1:
+            out_input = state[len(self.__hide_num)-1][1]
+        else:
+            out_input = state[1]
         output_weight = self._init_weight('output', self.__hide_num[-1], self.__out_num)
         y = tf.matmul(out_input, output_weight[0]) + output_weight[1]
         return y, state
