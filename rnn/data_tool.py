@@ -47,7 +47,9 @@ class data_frame(object):
         label = data.loc[:, self.__label_colum]
         label.replace(-2, 0, inplace=True)
         l = label.iloc[0]
-        larray = np.array([l], dtype=np.int)
+        larray = np.zeros(shape=(2,), dtype=np.int)
+        if l == 1:
+            larray[l] = l
         vmin = data.loc[:, self.__feature_column].min(axis=0)
         vmax = data.loc[:, self.__feature_column].max(axis=0)
         data = (data.loc[:, self.__feature_column]-vmin) / (vmax - vmin)

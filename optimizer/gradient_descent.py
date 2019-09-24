@@ -62,7 +62,9 @@ class gradient_descent(object):
         global_step = tf.Variable(0, trainable=False)
         variable_averges = tf.train.ExponentialMovingAverage(self.__moving_decay, global_step)
         variable_averges_op = variable_averges.apply(tf.trainable_variables())
-        cross_entropy = tf.square(tf.reshape(logits, [-1]) - tf.reshape(y,[-1]))
+
+        logging.debug('logits.shape {}, y.shape {} ymax.shape {}'.format(logits.shape, y.shape, tf.arg_max(y, 1).shape))
+        cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=tf.arg_max(y, 1))
         loss = tf.reduce_mean(cross_entropy)
         learn_rate = tf.train.exponential_decay(self.__learn_rate,
                                                 global_step,
@@ -105,17 +107,16 @@ class gradient_descent(object):
             xs, ys = next_data(self.__batch_size)
             while xs is not None:
                 p = sess.run(logits, feed_dict={x:xs})
-                xcol = xs.shape[-1]
-                ycol = ys.shape[-1]
-                x1 = np.reshape(xs, [-1, xcol])
-                y1 = np.reshape(ys, [-1, ycol])
-                p1 = np.reshape(p, [-1, ycol])
-                y = np.concatenate((y1, p1), axis=1)
+                pc = np.argmax(p, axis=1)
+                pc = np.reshape(pc, (pc.shape[0], 1))
+                y = np.argmax(ys, axis=1)
+                y = np.reshape(y, (y.shape[0], 1))
+                y1 = np.concatenate((y, pc), axis=1)
 
                 if predict_result is None:
-                    predict_result = y
+                    predict_result = y1
                 else:
-                    predict_result = np.concatenate((predict_result, y), axis=0)
+                    predict_result = np.concatenate((predict_result, y1), axis=0)
 
                 xs, ys = next_data(self.__batch_size)
         return predict_result

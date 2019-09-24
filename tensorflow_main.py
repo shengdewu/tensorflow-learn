@@ -15,7 +15,7 @@ def str2bool(v):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--option', default='lenet-5', type=str)
+    parser.add_argument('--option', default='lstm', type=str)
     parser.add_argument('--root_path', default='E:/data_warehouse/collision_warehouse/lstm', type=str)
     parser.add_argument('--file_key', default='label-lstm', type=str)
     parser.add_argument('--log_path', default='./lstm-log', type=str)
