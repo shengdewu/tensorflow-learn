@@ -39,15 +39,15 @@ class LSTM(object):
         else:
             cell = trnn.LSTMCell(self.__hide_num[0], state_is_tuple=True)
         state = cell.zero_state(self.__batch_size, tf.float32)
-        input_rnn, state = tf.nn.dynamic_rnn(cell, input_rnn, initial_state=state)
+        input_rnn, state = tf.nn.dynamic_rnn(cell, input_rnn, initial_state=state, time_major=False)
 
         '''
-        state 是lstm 最后一个cell的输出状态 因为lstm的输出有两个[ct,ht] 所以 state = [2, batch_size, cell_out_size]
+        1.state 是lstm 最后一个cell的输出状态 因为lstm的输出有两个[ct,ht] 所以 state = [2, batch_size, cell_out_size]
+        2. 把 input_rnn 转换成 [batch, out_num]*step 选用最后一个 input_rnn = tf.unstack(tf.transpose(input_rnn, [1,0,2]))
         '''
-        out_input = state[0]
+        out_input = state[1]
         output_weight = self._init_weight('output', self.__hide_num[-1], self.__out_num)
         y = tf.matmul(out_input, output_weight[0]) + output_weight[1]
-        y = tf.reshape(y,[-1, self.__out_num])
         return y, state
 
     def train(self, next_batch_data, optimize):
@@ -63,7 +63,8 @@ class LSTM(object):
 
     def predict(self, next_test_data, predict_mode):
         x = tf.placeholder(dtype=tf.float32, shape=[None, self.__time_step, self.__input_num])
+        y = tf.placeholder(dtype=tf.float32, shape=[None, self.__out_num])
         y1, s = self._build_network(x)
-        return predict_mode(next_test_data, x=x, logits=y1)
+        return predict_mode(next_test_data, x=x, logits=y1, y=y)
 
 

@@ -44,5 +44,13 @@ class LSTM_IMPL(object):
             col.append(self.__label_col)
             col.append('predict')
             predict_frame = pd.DataFrame(data=predict, columns=col)
+            tp = predict_frame.loc[(predict_frame['predict']==1) & (predict_frame[self.__label_col] == 1)]
+            fn = predict_frame.loc[(predict_frame['predict']==0) & (predict_frame[self.__label_col] == 1)]
+            fp = predict_frame.loc[(predict_frame['predict']==1) & (predict_frame[self.__label_col] == 0)]
+            tp = tp.shape[0]
+            fn = fn.shape[0]
+            fp = fp.shape[0]
+
+            print('recall=tp/(tp+fn):{},precesion=tp/(tp+fp):{}'.format(tp/(tp+fn), tp/(tp+fp)))
             predict_frame.to_csv(path + '/predict.csv', index=False)
         return

@@ -72,7 +72,6 @@ class data_frame(object):
             for dg in df.groupby(by=self.__time_step_column):
                 datag = dg[1].drop(columns=[self.__time_step_column])
                 if self.__time_step != datag.shape[0]:
-                    logging.debug('time step not equal{}-{}'.format(self.__time_step, datag.shape[0]))
                     datag.index = [x for x in range(datag.shape[0])]
                     for index in range(0, datag.shape[0], self.__time_step):
                         d = datag.iloc[index: index+self.__time_step]
@@ -87,7 +86,6 @@ class data_frame(object):
             self.__next_batch = 0
         data = None
         label = None
-        logging.debug('from {} featch [{}:{}]\n'.format(len(self.__data[0]), self.__next_batch, self.__next_batch+batch_size))
         if self.__next_batch + batch_size <= len(self.__data[0]):
             data = np.array(self.__data[0][self.__next_batch:self.__next_batch + batch_size])
             label = np.array(self.__data[1][self.__next_batch:self.__next_batch + batch_size])
