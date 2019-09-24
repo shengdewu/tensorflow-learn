@@ -93,9 +93,17 @@ class gradient_descent(object):
                             min_err = loss_value
                             min_step = step
                             saver.save(sess, save_path=self.__mode_path)
-                    print('after %d training step(s), loss on train batch is %g' % (step, loss_value))
+                    eloss = self.evaluate(xs, x, ys, logits, sess)
+                    print('after %d training step(s), loss on train batch is %g-%g' % (step, loss_value, eloss))
             print('optimize %d training step(s), loss on train batch is %g' % (min_step, min_err))
         return
+
+    def evaluate(self, xs, x, ys, logits, sess):
+        p = sess.run(logits, feed_dict={x: xs})
+        pc = np.argmax(p, axis=1)
+        y = np.argmax(ys, axis=1)
+        loss = np.sum(np.equal(pc, y))/len(pc)
+        return loss
 
     def generalization_predict(self, next_data, x, logits):
         predict_result = None
@@ -108,8 +116,11 @@ class gradient_descent(object):
             while xs is not None:
                 p = sess.run(logits, feed_dict={x:xs})
                 pc = np.argmax(p, axis=1)
-                pc = np.reshape(pc, (pc.shape[0], 1))
                 y = np.argmax(ys, axis=1)
+                loss = np.sum(np.equal(pc, y)) / len(pc)
+                print('predict loss on train batch is %g' % loss)
+
+                pc = np.reshape(pc, (pc.shape[0], 1))
                 y = np.reshape(y, (y.shape[0], 1))
                 y1 = np.concatenate((y, pc), axis=1)
 

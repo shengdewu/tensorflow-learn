@@ -14,6 +14,7 @@ class data_frame(object):
         self.__time_step_column = time_step_column
         self.__next_batch = 0
         self.__file_key = file_key
+        self.__position = 0
         self.__data = self._convert_list()
         return
 
@@ -47,9 +48,10 @@ class data_frame(object):
         label = data.loc[:, self.__label_colum]
         label.replace(-2, 0, inplace=True)
         l = label.iloc[0]
-        larray = np.zeros(shape=(2,), dtype=np.int)
         if l == 1:
-            larray[l] = l
+            self.__position += 1
+        larray = np.zeros(shape=(2,), dtype=np.int)
+        larray[l] = 1
         vmin = data.loc[:, self.__feature_column].min(axis=0)
         vmax = data.loc[:, self.__feature_column].max(axis=0)
         data = (data.loc[:, self.__feature_column]-vmin) / (vmax - vmin)
@@ -77,10 +79,12 @@ class data_frame(object):
                         self._append_data(d, data_array, label_array)
                 else:
                     self._append_data(datag, data_array, label_array)
-        print('total : {}'.format(len(data_array)))
+        print('total : {}/{}'.format(len(data_array), self.__position))
         return data_array, label_array
 
-    def next_batch(self, batch_size):
+    def next_batch(self, batch_size, clean=False):
+        if clean:
+            self.__next_batch = 0
         data = None
         label = None
         logging.debug('from {} featch [{}:{}]\n'.format(len(self.__data[0]), self.__next_batch, self.__next_batch+batch_size))
