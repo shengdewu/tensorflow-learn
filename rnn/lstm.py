@@ -1,5 +1,6 @@
 import tensorflow as tf
 import tensorflow.contrib.rnn as trnn
+import numpy as np
 import logging
 
 class LSTM(object):
@@ -41,17 +42,28 @@ class LSTM(object):
         init_state = cell.zero_state(self.__batch_size, tf.float32)
         rnn_output, state = tf.nn.dynamic_rnn(cell, input_rnn, initial_state=init_state, time_major=False)
 
-        '''
-        1.state 是lstm 最后一个cell的输出状态 因为lstm的输出有两个[ct,ht] 所以 state = [2, batch_size, cell_out_size]
-        2. 把 input_rnn 转换成 [batch, out_num]*step 选用最后一个 rnn_output = tf.unstack(tf.transpose(rnn_output, [1,0,2]))
-        '''
-        if len(self.__hide_num) > 1:
-            out_input = state[len(self.__hide_num)-1][1]
-        else:
-            out_input = state[1]
+        out_input = self._select_out(state, rnn_output, len(self.__hide_num)>1, select_state=False)
+
         output_weight = self._init_weight('output', self.__hide_num[-1], self.__out_num)
         y = tf.matmul(out_input, output_weight[0]) + output_weight[1]
         return y, state
+
+    def _select_out(self, state, output, multi=False, select_state=False):
+        '''
+        :param state:  是lstm 最后一个cell的输出状态 因为lstm的输出有两个[ct,ht] 所以 state = [2, batch_size, cell_out_size]
+        :param output:  把 它 转换成 [batch, out_num]*step 选用最后一个 rnn_output = tf.unstack(tf.transpose(output, [1,0,2]))
+        '''
+        out_input = None
+        if select_state:
+            if multi:
+                out_input = state[len(self.__hide_num)-1][1]
+            else:
+                out_input = state[1]
+        else:
+            time_output = tf.transpose(output, [1, 0, 2])
+            out_input = tf.reduce_mean(time_output, 0)
+
+        return out_input
 
     def train(self, next_batch_data, optimize):
         '''
