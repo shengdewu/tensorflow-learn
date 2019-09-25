@@ -34,16 +34,16 @@ class LSTM(object):
         input_rnn = tf.reshape(input_rnn, [-1, self.__time_step, self.__hide_num[0]])
         cell = None
         if len(self.__hide_num) > 1:
-            cells = [trnn.LSTMCell(unint, state_is_tuple=True) for unint in self.__hide_num]
-            cell = trnn.MultiRNNCell(cells)
+            cells = [tf.nn.rnn_cell.LSTMCell(unit) for unit in self.__hide_num]
+            cell = tf.nn.rnn_cell.MultiRNNCell(cells)
         else:
             cell = trnn.LSTMCell(self.__hide_num[0], state_is_tuple=True)
-        state = cell.zero_state(self.__batch_size, tf.float32)
-        input_rnn, state = tf.nn.dynamic_rnn(cell, input_rnn, initial_state=state, time_major=False)
+        init_state = cell.zero_state(self.__batch_size, tf.float32)
+        rnn_output, state = tf.nn.dynamic_rnn(cell, input_rnn, initial_state=init_state, time_major=False)
 
         '''
         1.state 是lstm 最后一个cell的输出状态 因为lstm的输出有两个[ct,ht] 所以 state = [2, batch_size, cell_out_size]
-        2. 把 input_rnn 转换成 [batch, out_num]*step 选用最后一个 input_rnn = tf.unstack(tf.transpose(input_rnn, [1,0,2]))
+        2. 把 input_rnn 转换成 [batch, out_num]*step 选用最后一个 rnn_output = tf.unstack(tf.transpose(rnn_output, [1,0,2]))
         '''
         if len(self.__hide_num) > 1:
             out_input = state[len(self.__hide_num)-1][1]

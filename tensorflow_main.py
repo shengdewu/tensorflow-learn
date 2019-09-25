@@ -74,6 +74,7 @@ if __name__ == '__main__':
                          hide_num=tuple(args.hide_num),
                          feature_col=args.feature_col,
                          label_col=args.label_col,
-                         time_step_column=args.time_step_column)
+                         time_step_column=args.time_step_column,
+                         mode_path=args.mode_path)
         lstm.excute(args.root_path, args.train)
 
