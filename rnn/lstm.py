@@ -42,7 +42,7 @@ class LSTM(object):
         init_state = cell.zero_state(self.__batch_size, tf.float32)
         rnn_output, state = tf.nn.dynamic_rnn(cell, input_rnn, initial_state=init_state, time_major=False)
 
-        out_input = self._select_out(state, rnn_output, len(self.__hide_num)>1, select_state=False)
+        out_input = self._select_out(state, rnn_output, len(self.__hide_num)>1, select_state=True)
 
         output_weight = self._init_weight('output', self.__hide_num[-1], self.__out_num)
         y = tf.matmul(out_input, output_weight[0]) + output_weight[1]

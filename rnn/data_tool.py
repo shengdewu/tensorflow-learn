@@ -40,7 +40,7 @@ class data_frame(object):
             else:
                 if pattern.search(data_source_name) is None:
                     continue
-            print(source_name+'\n')
+            print(source_name)
             data_sourc.append(source_name)
         return data_sourc
 
@@ -54,8 +54,29 @@ class data_frame(object):
         larray[l] = 1
         vmin = data.loc[:, self.__feature_column].min(axis=0)
         vmax = data.loc[:, self.__feature_column].max(axis=0)
-        data = (data.loc[:, self.__feature_column]-vmin) / (vmax - vmin)
-        data_array.append(data.to_numpy())
+
+        normal_data = data.loc[:, self.__feature_column].copy()
+        denm = vmax - vmin
+        is_zero = denm.loc[denm.isin([0])]
+        if is_zero.empty:
+            normal_data = (normal_data - vmin) / denm
+        else:
+            normal_data_dict = dict()
+            zero_column = list(is_zero.index)
+            for column in self.__feature_column:
+                tmp_data = data.loc[:, column]
+                tmp_max = tmp_data.max()
+                tmp_min = tmp_data.min()
+                tmp_normal_data = tmp_data
+                if column in zero_column:
+                    if tmp_max != 0 and tmp_max != 1:
+                        tmp_normal_data = tmp_data/tmp_max
+                else:
+                    tmp_normal_data = (tmp_data-tmp_min)/(tmp_max-tmp_min)
+                normal_data_dict[column] = tmp_normal_data
+            normal_data = pd.DataFrame(normal_data_dict)
+
+        data_array.append(normal_data.to_numpy())
         label_array.append(larray)
         return
 
@@ -70,14 +91,19 @@ class data_frame(object):
             df = pd.read_csv(fl, engine='c', usecols=use_col, encoding='gbk')
             df = df.loc[(df[self.__label_colum] == 1) | (df[self.__label_colum] == 0)]
             for dg in df.groupby(by=self.__time_step_column):
-                datag = dg[1].drop(columns=[self.__time_step_column])
-                if self.__time_step != datag.shape[0]:
-                    datag.index = [x for x in range(datag.shape[0])]
-                    for index in range(0, datag.shape[0], self.__time_step):
-                        d = datag.iloc[index: index+self.__time_step]
-                        self._append_data(d, data_array, label_array)
+                if self.__time_step != dg[1].shape[0]:
+                    print('file{}-key{}:time step {} not match actual {}'.format(fl, dg[0], self.__time_step, dg[1].shape[0]))
+                    dg[1].index = [x for x in range(dg[1].shape[0])]
+                    for index in range(0, dg[1].shape[0], self.__time_step):
+                        d = dg[1].iloc[index: index+self.__time_step]
+                        count = d.duplicated(subset=self.__time_step_column, keep=False).value_counts()[True]
+                        if self.__time_step != count:
+                            raise RuntimeError('step is not equal {}!= {}'.format(self.__time_step, count))
+                        sample = d.drop(columns=[self.__time_step_column])
+                        self._append_data(sample, data_array, label_array)
                 else:
-                    self._append_data(datag, data_array, label_array)
+                    sample = dg[1].drop(columns=[self.__time_step_column])
+                    self._append_data(sample, data_array, label_array)
         print('total : {}/{}'.format(len(data_array), self.__position))
         return data_array, label_array
 
