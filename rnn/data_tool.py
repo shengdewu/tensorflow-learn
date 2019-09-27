@@ -92,7 +92,7 @@ class data_frame(object):
             df = df.loc[(df[self.__label_colum] == 1) | (df[self.__label_colum] == 0)]
             for dg in df.groupby(by=self.__time_step_column):
                 if self.__time_step != dg[1].shape[0]:
-                    print('file{}-key{}:time step {} not match actual {}'.format(fl, dg[0], self.__time_step, dg[1].shape[0]))
+                    #print('file{}-key{}:time step {} not match actual {}'.format(fl, dg[0], self.__time_step, dg[1].shape[0]))
                     dg[1].index = [x for x in range(dg[1].shape[0])]
                     for index in range(0, dg[1].shape[0], self.__time_step):
                         d = dg[1].iloc[index: index+self.__time_step]

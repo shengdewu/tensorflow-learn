@@ -63,5 +63,6 @@ class LSTM_IMPL(object):
         fp = fp.shape[0]
 
         print('recall=tp/(tp+fn):{},precesion=tp/(tp+fp):{}'.format(tp/(tp+fn), tp/(tp+fp)))
+        logging.info('recall=tp/(tp+fn):{},precesion=tp/(tp+fp):{}'.format(tp / (tp + fn), tp / (tp + fp)))
         predict_frame.to_csv(path + '/predict.csv', index=False)
         return
