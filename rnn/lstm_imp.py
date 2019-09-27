@@ -58,11 +58,25 @@ class LSTM_IMPL(object):
         tp = predict_frame.loc[(predict_frame['predict']==1) & (predict_frame[self.__label_col] == 1)]
         fn = predict_frame.loc[(predict_frame['predict']==0) & (predict_frame[self.__label_col] == 1)]
         fp = predict_frame.loc[(predict_frame['predict']==1) & (predict_frame[self.__label_col] == 0)]
+        tn = predict_frame.loc[(predict_frame['predict'] == 0) & (predict_frame[self.__label_col] == 0)]
         tp = tp.shape[0]
         fn = fn.shape[0]
         fp = fp.shape[0]
+        tn = tn.shape[0]
 
         print('recall=tp/(tp+fn):{},precesion=tp/(tp+fp):{}'.format(tp/(tp+fn), tp/(tp+fp)))
+        print('        P           |          N')
+        print(' -----------------------------------')
+        print('T|       {}         |         {}    |'.format(tp, tn))
+        print(' -----------------------------------')
+        print('F|       {}         |         {}    |'.format(fp, fn))
+        print(' -----------------------------------')
         logging.info('recall=tp/(tp+fn):{},precesion=tp/(tp+fp):{}'.format(tp / (tp + fn), tp / (tp + fp)))
+        logging.info('        P           |        N')
+        logging.info(' -----------------------------------')
+        logging.info('T|       {}         |         {}    |'.format(tp, tn))
+        logging.info(' -----------------------------------')
+        logging.info('F|       {}         |         {}    |'.format(fp, fn))
+        logging.info(' -----------------------------------')
         predict_frame.to_csv(path + '/predict.csv', index=False)
         return

@@ -8,11 +8,11 @@
     </output_layer>
     <cell_layer>
         <time_step>22</time_step>
-        <cell_unit>30</cell_unit>
+        <cell_unit>30, 20</cell_unit>
     </cell_layer>
     <optimize>
-        <batch_size>30</batch_size>
-        <learn_rate>0.00001</learn_rate>
+        <batch_size>25</batch_size>
+        <learn_rate>0.0001</learn_rate>
         <decay_rate>0.99</decay_rate>
         <moving_decay>0.99</moving_decay>
         <regularize_rate>0.00001</regularize_rate>
