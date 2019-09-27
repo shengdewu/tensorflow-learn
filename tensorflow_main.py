@@ -17,17 +17,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--option', default='lstm', type=str)
     parser.add_argument('--root_path', default='E:/data_warehouse/collision_warehouse/lstm', type=str)
-    parser.add_argument('--file_key', default='label-lstm', type=str)
+    parser.add_argument('---train_file_key', default='label-lstm', type=str)
+    parser.add_argument('---test_file_key', default='label-lstm', type=str)
     parser.add_argument('--log_path', default='./lstm-log', type=str)
-    parser.add_argument('--batch_size', default=20, type=int)
-    parser.add_argument('--time_step', default=22, type=int)
-    parser.add_argument('--out_num', default=2, type=int)
-    parser.add_argument('--hide_num', default=(12,), type=int, nargs='+')
     parser.add_argument('--feature_col', default=('speed', 'acceleration', 'accelerationX', 'accelerationY', 'accelerationZ'), type=str, nargs='+')
     parser.add_argument('--label_col', default='flag', type=str)
     parser.add_argument('--time_step_column', default='flagtime', type=str)
     parser.add_argument('--mode_path', default='./mode_path/checkout', type=str)
     parser.add_argument('--train', default=True, type=str2bool)
+    parser.add_argument('--config_path', default='./config/lstm.xml', type=str)
     args = parser.parse_args()
     opt = args.option
 
@@ -67,14 +65,11 @@ if __name__ == '__main__':
 
     if opt == 'lstm':
         lstm = LSTM_IMPL(log_path=args.log_path,
-                         file_key=args.file_key,
-                         batch_size=args.batch_size,
-                         time_step=args.time_step,
-                         out_num=args.out_num,
-                         hide_num=tuple(args.hide_num),
+                         train_file_key=args.train_file_key,
+                         test_file_key=args.test_file_key,
                          feature_col=args.feature_col,
                          label_col=args.label_col,
                          time_step_column=args.time_step_column,
-                         mode_path=args.mode_path)
-        lstm.excute(args.root_path, args.train)
+                         config_path=args.config_path)
+        lstm.excute(args.root_path)
 

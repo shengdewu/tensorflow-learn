@@ -97,11 +97,15 @@ class data_frame(object):
                     for index in range(0, dg[1].shape[0], self.__time_step):
                         d = dg[1].iloc[index: index+self.__time_step]
                         count = d.duplicated(subset=self.__time_step_column, keep=False).value_counts()[True]
-                        if self.__time_step != count:
-                            raise RuntimeError('step is not equal {}!= {}'.format(self.__time_step, count))
+                        label = d.duplicated(subset=self.__label_colum, keep=False).value_counts()[True]
+                        if self.__time_step != count or self.__time_step != label:
+                            raise RuntimeError('step is not equal {}!= {} or {}'.format(self.__time_step, label, count))
                         sample = d.drop(columns=[self.__time_step_column])
                         self._append_data(sample, data_array, label_array)
                 else:
+                    label = dg[1].duplicated(subset=self.__label_colum, keep=False).value_counts()[True]
+                    if self.__time_step != label:
+                        raise RuntimeError('step is not equal label not match {}!= {}'.format(self.__time_step, label))
                     sample = dg[1].drop(columns=[self.__time_step_column])
                     self._append_data(sample, data_array, label_array)
         print('total : {}/{}'.format(len(data_array), self.__position))
@@ -117,4 +121,10 @@ class data_frame(object):
             label = np.array(self.__data[1][self.__next_batch:self.__next_batch + batch_size])
         self.__next_batch += batch_size
         return data, label
+
+    def clean(self):
+        self.__data[0].clear()
+        self.__data[1].clear()
+        return
+
 

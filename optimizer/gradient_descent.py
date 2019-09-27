@@ -4,28 +4,31 @@ import logging
 
 class gradient_descent(object):
     def __init__(self,
-                 learn_rate=0.001,
+                 learn_rate=0.0001,
                  decay_rate=0.99,
                  moving_decay=0.99,
-                 train_step=50000,
+                 regularize_rate=0.01,
+                 max_iter_times=50000,
                  mode_path=None,
-                 save_freq=100,
+                 update_mode_freq=100,
                  batch_size=100):
         '''
         :param learn_rate: 全连接的学习率
         :param decay_rate:全连接的学习衰减率
         :param moving_decay: 滑动平均衰减率
-        :param train_step: 迭代次数
+        :param regularize_rate:正则化率
+        :param max_iter_times: 迭代次数
         :param mode_path:保存训练模型
-        :param save_freq: 模型保存频率
+        :param update_mode_freq: 模型保存频率
         :param batch_size: 批处理大小
         '''
         self.__learn_rate = learn_rate
         self.__decay_rate = decay_rate
         self.__moving_decay = moving_decay
-        self.__train_step = train_step
+        self.__regularize_rate = regularize_rate
+        self.max_iter_times = max_iter_times
         self.__mode_path = mode_path
-        self.__save_freq = save_freq
+        self.update_mode_freq = update_mode_freq
         self.__batch_size = batch_size
         return
 
@@ -50,7 +53,7 @@ class gradient_descent(object):
 
         with tf.Session() as sess:
             tf.initialize_all_variables().run()
-            for i in range(self.__train_step):
+            for i in range(self.max_iter_times):
                 xs, ys = mnist.train.next_batch(input_shape[0])
                 reshape_xs = np.reshape(xs, input_shape)
                 _, loss_value, step = sess.run([train_op, loss, global_step], feed_dict={x: reshape_xs, y: ys})
@@ -63,8 +66,12 @@ class gradient_descent(object):
         variable_averges = tf.train.ExponentialMovingAverage(self.__moving_decay, global_step)
         variable_averges_op = variable_averges.apply(tf.trainable_variables())
 
+        regularizer = tf.contrib.layers.l2_regularizer(self.__regularize_rate)
+        regularize_loss = [regularizer(v) for v in tf.trainable_variables() if len(v.shape) > 1]
+
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y)
-        loss = tf.reduce_mean(cross_entropy)
+        loss = tf.reduce_mean(cross_entropy) + tf.add_n(regularize_loss)
+
         learn_rate = tf.train.exponential_decay(self.__learn_rate,
                                                 global_step,
                                                 logits.shape[0],
@@ -83,7 +90,7 @@ class gradient_descent(object):
             tf.global_variables_initializer().run()
             min_err = 1e10
             min_step = 0
-            for i in range(self.__train_step):
+            for i in range(self.max_iter_times):
                 xs, ys = batch_data(self.__batch_size)
                 if xs is None:
                     logging.warning('{} step(s) the data has been obtained!'.format(i))
@@ -91,7 +98,7 @@ class gradient_descent(object):
                 _, pred, loss_value, step = sess.run([train_op, logits,loss, global_step], feed_dict={x: xs, y: ys})
                 print(np.argmax(pred, 1))
                 print(np.argmax(ys, 1))
-                if i % self.__save_freq == 0:
+                if i % self.update_mode_freq == 0:
                     if self.__mode_path is not None:
                         if min_err > loss_value:
                             min_err = loss_value
