@@ -17,8 +17,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--option', default='lstm', type=str)
     parser.add_argument('--root_path', default='E:/data_warehouse/collision_warehouse/lstm', type=str)
-    parser.add_argument('---train_file_key', default='label-lstm', type=str)
-    parser.add_argument('---test_file_key', default='label-lstm', type=str)
+    parser.add_argument('---file_key', default='label-lstm', type=str)
     parser.add_argument('--log_path', default='./lstm-log', type=str)
     parser.add_argument('--feature_col', default=('speed', 'acceleration', 'accelerationX', 'accelerationY', 'accelerationZ'), type=str, nargs='+')
     parser.add_argument('--label_col', default='flag', type=str)
@@ -65,8 +64,7 @@ if __name__ == '__main__':
 
     if opt == 'lstm':
         lstm = LSTM_IMPL(log_path=args.log_path,
-                         train_file_key=args.train_file_key,
-                         test_file_key=args.test_file_key,
+                         file_key=args.file_key,
                          feature_col=args.feature_col,
                          label_col=args.label_col,
                          time_step_column=args.time_step_column,

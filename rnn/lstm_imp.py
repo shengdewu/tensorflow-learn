@@ -10,8 +10,7 @@ from rnn.mnist_data import mnist_frame
 class LSTM_IMPL(object):
     def __init__(self,
                  log_path,
-                 train_file_key,
-                 test_file_key,
+                 file_key,
                  feature_col=('speed', 'acceleration', 'accelerationX', 'accelerationY', 'accelerationZ'),
                  label_col='flag',
                  time_step_column='flagtime',
@@ -20,8 +19,7 @@ class LSTM_IMPL(object):
         self.__feature_col = list(feature_col)#['speed', 'acceleration', 'accelerationX', 'accelerationY', 'accelerationZ']
         self.__label_col = label_col#'flag'
         self.__time_step_column = time_step_column#'flagtime'
-        self.__train_file_key = train_file_key#'lstm-[0-9]'
-        self.__test_file_key = test_file_key
+        self.__file_key = file_key#'lstm-[0-9]'
 
         self.__config = parse_config.get_config(config_path)
         logging.info('mode param: feature_col {}, label_col {}, time_step_column {}, config {}'.format(feature_col, label_col, time_step_column, self.__config))
@@ -42,22 +40,20 @@ class LSTM_IMPL(object):
 
     def excute(self, path):
 
+        data_parse = data_frame(path, self.__config['time_step'], self.__feature_col, self.__label_col,self.__time_step_column, self.__file_key)
         logging.debug('start train...')
-        train_data_parse = data_frame(path, self.__config['time_step'], self.__feature_col, self.__label_col,self.__time_step_column, self.__train_file_key)
-        self.__lstm_mode.train(train_data_parse.next_batch, self.__optimize.generalization_optimize)
-        train_data_parse.clean()
+        self.__lstm_mode.train(data_parse.next_batch, self.__optimize.generalization_optimize)
+        data_parse.clean()
 
         logging.debug('start test...')
-        test_data_parse = data_frame(path, self.__config['time_step'], self.__feature_col, self.__label_col,self.__time_step_column, self.__test_file_key)
-        predict = self.__lstm_mode.predict(test_data_parse.next_batch, self.__optimize.generalization_predict)
-        test_data_parse.clean()
+        predict = self.__lstm_mode.predict(data_parse.next_batch, self.__optimize.generalization_predict)
         col = list()
         col.append(self.__label_col)
         col.append('predict')
         predict_frame = pd.DataFrame(data=predict, columns=col)
-        tp = predict_frame.loc[(predict_frame['predict']==1) & (predict_frame[self.__label_col] == 1)]
-        fn = predict_frame.loc[(predict_frame['predict']==0) & (predict_frame[self.__label_col] == 1)]
-        fp = predict_frame.loc[(predict_frame['predict']==1) & (predict_frame[self.__label_col] == 0)]
+        tp = predict_frame.loc[(predict_frame['predict'] == 1) & (predict_frame[self.__label_col] == 1)]
+        fn = predict_frame.loc[(predict_frame['predict'] == 0) & (predict_frame[self.__label_col] == 1)]
+        fp = predict_frame.loc[(predict_frame['predict'] == 1) & (predict_frame[self.__label_col] == 0)]
         tn = predict_frame.loc[(predict_frame['predict'] == 0) & (predict_frame[self.__label_col] == 0)]
         tp = tp.shape[0]
         fn = fn.shape[0]

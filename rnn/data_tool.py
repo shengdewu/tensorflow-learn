@@ -15,9 +15,7 @@ class data_frame(object):
         self.__next_batch = 0
         self.__file_key = file_key
         self.__position = 0
-        self.__data = self._convert_list()
-        test_index = np.random.randint(0, len(self.__data[0]))
-        self.__test = self.__data[0][test_index], self.__data[1][test_index]
+        self.__test, self.__train = self._featch_data()
         return
 
     def _seek_data_source_file(self,data_source_path, filter_key, pos=1):
@@ -82,13 +80,23 @@ class data_frame(object):
         label_array.append(larray)
         return
 
-    def _convert_list(self):
+    def _featch_data(self):
         use_col = self.__feature_column.copy()
         use_col.append(self.__label_colum)
         use_col.append(self.__time_step_column)
+
+        file_list = self._seek_data_source_file(self.__path, self.__file_key, 1)
+        np.random.shuffle(file_list)
+        test_index = int(len(file_list) * 0.25)
+        print('featch test [0:{}]'.format(test_index))
+        test_data = self._convert_list(use_col, file_list[0: test_index])
+        print('featch train [{}:]'.format(test_index))
+        train_data = self._convert_list(use_col, file_list[test_index:])
+        return test_data, train_data
+
+    def _convert_list(self, use_col, file_list):
         data_array = []
         label_array = []
-        file_list = self._seek_data_source_file(self.__path, self.__file_key, 1)
         for fl in file_list:
             df = pd.read_csv(fl, engine='c', usecols=use_col, encoding='gbk')
             df = df.loc[(df[self.__label_colum] == 1) | (df[self.__label_colum] == 0)]
@@ -117,18 +125,24 @@ class data_frame(object):
         data = None
         label = None
         if train:
-            if self.__next_batch + batch_size <= len(self.__data[0]):
-                data = np.array(self.__data[0][self.__next_batch:self.__next_batch + batch_size])
-                label = np.array(self.__data[1][self.__next_batch:self.__next_batch + batch_size])
+            if self.__next_batch + batch_size <= len(self.__train[0]):
+                data = np.array(self.__train[0][self.__next_batch:self.__next_batch + batch_size])
+                label = np.array(self.__train[1][self.__next_batch:self.__next_batch + batch_size])
             self.__next_batch += batch_size
         else:
-            data = np.reshape(self.__test[0], newshape=[1, self.__test[0].shape[0], self.__test[0].shape[1]])
-            label = np.reshape(self.__test[1], newshape=[1, self.__test[1].shape[0]])
+            if batch_size is None:
+                data = np.array(self.__test[0])
+                label = np.array(self.__test[1])
+            else:
+                if self.__next_batch + batch_size <= len(self.__test[0]):
+                    data = np.array(self.__test[0][self.__next_batch:self.__next_batch + batch_size])
+                    label = np.array(self.__test[1][self.__next_batch:self.__next_batch + batch_size])
+                self.__next_batch += batch_size
         return data, label
 
     def clean(self):
-        self.__data[0].clear()
-        self.__data[1].clear()
+        self.__next_batch = 0
         return
+
 
 

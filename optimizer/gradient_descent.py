@@ -102,8 +102,9 @@ class gradient_descent(object):
                         if min_err > loss_value:
                             min_err = loss_value
                             saver.save(sess, save_path=self.__mode_path)
+                    print('predict {}\n label {}'.format(np.argmax(pred, axis=1), np.argmax(ys, axis=1)))
                     print('after %d training step(s), loss on train batch is %g' % (step, loss_value))
-            test_xs, test_ys = batch_data(self.__batch_size, train=False)
+            test_xs, test_ys = batch_data(batch_size=None, train=False)
             self._eval(x, test_xs, y, test_ys, accuracy, logits, sess, batch_size)
         return
 
@@ -130,10 +131,10 @@ class gradient_descent(object):
         if tp + fn != 0:
             recall = tp / (tp + fn)
 
-        print('optimize finished, test accuracy is {}, [{}-{}],precision={}, recall={}'.format(acc,label, pred, precision, recall))
+        print('optimize eval, test accuracy is {}, [label:{}-pred:{}],precision={}, recall={}'.format(acc,label, pred, precision, recall))
         return pred, label
 
-    def generalization_predict(self, next_data, x, y, logits, batch_size):
+    def generalization_predict(self, next_data, x, logits, y, batch_size):
         predict_result = None
         accuracy = tf.metrics.accuracy(labels=tf.argmax(y, 1), predictions=tf.argmax(logits, 1))[1]
 
@@ -144,9 +145,10 @@ class gradient_descent(object):
             sess.run(init_var)
             saver.restore(sess, self.__mode_path)
 
-            xs, ys = next_data(self.__batch_size)
+            xs, ys = next_data(self.__batch_size, train=False)
             while xs is not None:
                 pred, label = self._eval(x, xs, y, ys, accuracy, logits, sess, batch_size)
+
                 pc = np.reshape(pred, (pred.shape[0], 1))
                 label = np.reshape(label, (label.shape[0], 1))
                 label = np.concatenate((label, pc), axis=1)
