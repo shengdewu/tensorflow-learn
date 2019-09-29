@@ -89,26 +89,26 @@ class gradient_descent(object):
         saver = tf.train.Saver()
         with tf.Session() as sess:
             sess.run(init_var)
-            min_err = 1e10
+            max_accuracy = 0
             for i in range(self.max_iter_times):
                 xs, ys = batch_data(self.__batch_size)
                 if xs is None:
                     logging.warning('{} step(s) the data has been obtained!'.format(i))
                     break
-                _, pred, loss_value, step = sess.run([train_op, logits,accuracy, global_step], feed_dict={x: xs, y: ys, batch_size:self.__batch_size})
+                _, pred, accuracy_value, step = sess.run([train_op, logits, accuracy, global_step], feed_dict={x: xs, y: ys, batch_size:self.__batch_size})
 
                 if i % self.update_mode_freq == 0:
                     if self.__mode_path is not None:
-                        if min_err > loss_value:
-                            min_err = loss_value
+                        if max_accuracy < accuracy_value:
+                            max_accuracy = accuracy_value
                             saver.save(sess, save_path=self.__mode_path)
                     print('predict {}\n label {}'.format(np.argmax(pred, axis=1), np.argmax(ys, axis=1)))
-                    print('after %d training step(s), loss on train batch is %g' % (step, loss_value))
+                    print('after %d training step(s), accuracy on train batch is %g' % (step, accuracy_value))
             test_xs, test_ys = batch_data(batch_size=None, train=False)
             self._eval(x, test_xs, y, test_ys, accuracy, logits, sess, batch_size)
         return
 
-    def _eval(self, x, xs, y, ys, accuracy, logits,sess, batch_size):
+    def _eval(self, x, xs, y, ys, accuracy, logits, sess, batch_size):
         acc, pred = sess.run([accuracy, logits], feed_dict={x: xs, y: ys, batch_size:xs.shape[0]})
         pred = np.argmax(pred, axis=1)
         label = np.argmax(ys, axis=1)
@@ -138,14 +138,14 @@ class gradient_descent(object):
         predict_result = None
         accuracy = tf.metrics.accuracy(labels=tf.argmax(y, 1), predictions=tf.argmax(logits, 1))[1]
 
-        init_var = tf.group(tf.local_variables_initializer(), tf.global_variables_initializer())
-
+        self.__batch_size = 1
         saver = tf.train.Saver()
         with tf.Session() as sess:
-            sess.run(init_var)
+            print('load model from {}'.format(self.__mode_path))
             saver.restore(sess, self.__mode_path)
+            sess.run(tf.local_variables_initializer())  #tf.global_variables_initializer() 不用初始化，模型已经初始化了，否则会造成严重后果
 
-            xs, ys = next_data(self.__batch_size, train=False)
+            xs, ys = next_data(batch_size=self.__batch_size, train=False)
             while xs is not None:
                 pred, label = self._eval(x, xs, y, ys, accuracy, logits, sess, batch_size)
 

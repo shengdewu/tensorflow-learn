@@ -3,6 +3,7 @@ import numpy as np
 import logging
 import os
 import re
+import random
 
 class data_frame(object):
     def __init__(self, path, time_step, feature_column, label_colum, time_step_column, file_key):
@@ -86,13 +87,20 @@ class data_frame(object):
         use_col.append(self.__time_step_column)
 
         file_list = self._seek_data_source_file(self.__path, self.__file_key, 1)
-        np.random.shuffle(file_list)
-        test_index = int(len(file_list) * 0.25)
-        print('featch test [0:{}]'.format(test_index))
-        test_data = self._convert_list(use_col, file_list[0: test_index])
-        print('featch train [{}:]'.format(test_index))
-        train_data = self._convert_list(use_col, file_list[test_index:])
-        return test_data, train_data
+
+        data = self._convert_list(use_col, file_list)
+        index = [x for x in range(len(data[0]))]
+        k = int(len(data[0]) * 0.25)
+        test_index = random.sample(index, k)
+        print('featch test {}'.format(test_index))
+        test_data_x = [data[0][x] for x in test_index]
+        test_data_y = [data[1][x] for x in test_index]
+
+        train_index = set(index).difference(set(test_index))
+        print('featch train {}'.format(train_index))
+        train_data_x = [data[0][x] for x in train_index]
+        train_data_y = [data[1][x] for x in train_index]
+        return (test_data_x, test_data_y), (train_data_x, train_data_y)
 
     def _convert_list(self, use_col, file_list):
         data_array = []
