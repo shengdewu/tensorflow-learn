@@ -158,6 +158,6 @@ class gradient_descent(object):
                 else:
                     predict_result = np.concatenate((predict_result, label), axis=0)
 
-                xs, ys = next_data(self.__batch_size)
+                xs, ys = next_data(self.__batch_size, train=False)
         return predict_result
 
