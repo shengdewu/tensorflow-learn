@@ -32,7 +32,7 @@ class gradient_descent(object):
         self.__batch_size = batch_size
         return
 
-    def optimize(self, mnist, x, logits, y, batch_size, loses_name='loses'):
+    def optimize(self, mnist, x, logits, y, loses_name='loses'):
         input_shape = x.get_shape().as_list()
         # 滑动平均
         global_step = tf.Variable(0, trainable=False)
@@ -56,7 +56,7 @@ class gradient_descent(object):
             for i in range(self.max_iter_times):
                 xs, ys = mnist.train.next_batch(input_shape[0])
                 reshape_xs = np.reshape(xs, input_shape)
-                _, loss_value, step = sess.run([train_op, loss, global_step], feed_dict={x: reshape_xs, y: ys, batch_size:self.__batch_size})
+                _, loss_value, step = sess.run([train_op, loss, global_step], feed_dict={x: reshape_xs, y: ys})
                 if i % 1000 == 0:
                     print('after %d training step(s), loss on train batch is %g' % (step, loss_value))
         return
