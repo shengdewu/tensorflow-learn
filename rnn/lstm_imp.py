@@ -5,6 +5,7 @@ from log.log_configure import log_configure
 import logging
 import pandas as pd
 from tool.parse_config import parse_config
+from rnn.mnist_data import mnist_frame
 
 class LSTM_IMPL(object):
     def __init__(self,
@@ -27,8 +28,7 @@ class LSTM_IMPL(object):
         self.__lstm_mode = LSTM(self.__config['input_num'],
                                 self.__config['time_step'],
                                 self.__config['output_num'],
-                                tuple(self.__config['cell_unit']),
-                                self.__config['batch_size'])
+                                tuple(self.__config['cell_unit']))
 
         self.__optimize = gradient_descent(self.__config['learn_rate'],
                                            self.__config['decay_rate'],

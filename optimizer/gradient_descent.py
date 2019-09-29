@@ -32,7 +32,7 @@ class gradient_descent(object):
         self.__batch_size = batch_size
         return
 
-    def optimize(self, mnist, x, logits, y, loses_name='loses'):
+    def optimize(self, mnist, x, logits, y, batch_size, loses_name='loses'):
         input_shape = x.get_shape().as_list()
         # 滑动平均
         global_step = tf.Variable(0, trainable=False)
@@ -56,12 +56,12 @@ class gradient_descent(object):
             for i in range(self.max_iter_times):
                 xs, ys = mnist.train.next_batch(input_shape[0])
                 reshape_xs = np.reshape(xs, input_shape)
-                _, loss_value, step = sess.run([train_op, loss, global_step], feed_dict={x: reshape_xs, y: ys})
+                _, loss_value, step = sess.run([train_op, loss, global_step], feed_dict={x: reshape_xs, y: ys, batch_size:self.__batch_size})
                 if i % 1000 == 0:
                     print('after %d training step(s), loss on train batch is %g' % (step, loss_value))
         return
 
-    def generalization_optimize(self, batch_data, x, logits, y):
+    def generalization_optimize(self, batch_data, x, logits, y, batch_size):
         global_step = tf.Variable(0, trainable=False)
         variable_averges = tf.train.ExponentialMovingAverage(self.__moving_decay, global_step)
         variable_averges_op = variable_averges.apply(tf.trainable_variables())
@@ -74,43 +74,41 @@ class gradient_descent(object):
 
         learn_rate = tf.train.exponential_decay(self.__learn_rate,
                                                 global_step,
-                                                logits.shape[0],
+                                                self.__batch_size,
                                                 self.__decay_rate, staircase=False)
-        train_step = tf.train.AdadeltaOptimizer(learning_rate=learn_rate).minimize(loss, global_step)
+        train_step = tf.train.AdamOptimizer(learning_rate=learn_rate).minimize(loss, global_step)
 
         with tf.control_dependencies([train_step, variable_averges_op]):
             train_op = tf.no_op(name='train')
 
-        correct_pred = tf.equal(tf.argmax(logits, 1), tf.argmax(y, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+        accuracy = tf.metrics.accuracy(labels=tf.argmax(y, 1), predictions=tf.argmax(logits, 1))[1]
+
+        init_var = tf.group(tf.local_variables_initializer(), tf.global_variables_initializer())
 
         #持久化
         saver = tf.train.Saver()
         with tf.Session() as sess:
-            tf.global_variables_initializer().run()
+            sess.run(init_var)
             min_err = 1e10
-            min_step = 0
             for i in range(self.max_iter_times):
                 xs, ys = batch_data(self.__batch_size)
                 if xs is None:
                     logging.warning('{} step(s) the data has been obtained!'.format(i))
                     break
-                _, pred, loss_value, step = sess.run([train_op, logits,loss, global_step], feed_dict={x: xs, y: ys})
-                print(np.argmax(pred, 1))
-                print(np.argmax(ys, 1))
+                _, pred, loss_value, step = sess.run([train_op, logits,accuracy, global_step], feed_dict={x: xs, y: ys, batch_size:self.__batch_size})
+
                 if i % self.update_mode_freq == 0:
                     if self.__mode_path is not None:
                         if min_err > loss_value:
                             min_err = loss_value
-                            min_step = step
                             saver.save(sess, save_path=self.__mode_path)
-                    self._eval(x, xs, y, ys, logits, accuracy, sess)
                     print('after %d training step(s), loss on train batch is %g' % (step, loss_value))
-            print('optimize %d training step(s), loss on train batch is %g' % (min_step, min_err))
+            test_xs, test_ys = batch_data(self.__batch_size, train=False)
+            self._eval(x, test_xs, y, test_ys, accuracy, logits, sess, batch_size)
         return
 
-    def _eval(self, x, xs, y, ys, logits, accuracy,sess):
-        acc, pred = sess.run([accuracy, logits], feed_dict={x: xs, y: ys})
+    def _eval(self, x, xs, y, ys, accuracy, logits,sess, batch_size):
+        acc, pred = sess.run([accuracy, logits], feed_dict={x: xs, y: ys, batch_size:xs.shape[0]})
         pred = np.argmax(pred, axis=1)
         label = np.argmax(ys, axis=1)
 
@@ -132,21 +130,23 @@ class gradient_descent(object):
         if tp + fn != 0:
             recall = tp / (tp + fn)
 
-        print('predict loss on train batch is {}-{}-{}-{}-{}'.format(acc, pred, label, precision, recall))
+        print('optimize finished, test accuracy is {}, [{}-{}],precision={}, recall={}'.format(acc,label, pred, precision, recall))
         return pred, label
 
-    def generalization_predict(self, next_data, x, y, logits):
+    def generalization_predict(self, next_data, x, y, logits, batch_size):
         predict_result = None
-        correct_pred = tf.equal(tf.argmax(logits, 1), tf.argmax(y, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+        accuracy = tf.metrics.accuracy(labels=tf.argmax(y, 1), predictions=tf.argmax(logits, 1))[1]
+
+        init_var = tf.group(tf.local_variables_initializer(), tf.global_variables_initializer())
+
         saver = tf.train.Saver()
         with tf.Session() as sess:
-            tf.global_variables_initializer().run()
+            sess.run(init_var)
             saver.restore(sess, self.__mode_path)
 
             xs, ys = next_data(self.__batch_size)
             while xs is not None:
-                pred, label = self._eval(x, xs, y, ys, logits, accuracy, sess)
+                pred, label = self._eval(x, xs, y, ys, accuracy, logits, sess, batch_size)
                 pc = np.reshape(pred, (pred.shape[0], 1))
                 label = np.reshape(label, (label.shape[0], 1))
                 label = np.concatenate((label, pc), axis=1)

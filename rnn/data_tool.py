@@ -16,6 +16,8 @@ class data_frame(object):
         self.__file_key = file_key
         self.__position = 0
         self.__data = self._convert_list()
+        test_index = np.random.randint(0, len(self.__data[0]))
+        self.__test = self.__data[0][test_index], self.__data[1][test_index]
         return
 
     def _seek_data_source_file(self,data_source_path, filter_key, pos=1):
@@ -111,15 +113,17 @@ class data_frame(object):
         print('total : {}/{}'.format(len(data_array), self.__position))
         return data_array, label_array
 
-    def next_batch(self, batch_size, clean=False):
-        if clean:
-            self.__next_batch = 0
+    def next_batch(self, batch_size, train=True):
         data = None
         label = None
-        if self.__next_batch + batch_size <= len(self.__data[0]):
-            data = np.array(self.__data[0][self.__next_batch:self.__next_batch + batch_size])
-            label = np.array(self.__data[1][self.__next_batch:self.__next_batch + batch_size])
-        self.__next_batch += batch_size
+        if train:
+            if self.__next_batch + batch_size <= len(self.__data[0]):
+                data = np.array(self.__data[0][self.__next_batch:self.__next_batch + batch_size])
+                label = np.array(self.__data[1][self.__next_batch:self.__next_batch + batch_size])
+            self.__next_batch += batch_size
+        else:
+            data = np.reshape(self.__test[0], newshape=[1, self.__test[0].shape[0], self.__test[0].shape[1]])
+            label = np.reshape(self.__test[1], newshape=[1, self.__test[1].shape[0]])
         return data, label
 
     def clean(self):
