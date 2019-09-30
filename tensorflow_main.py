@@ -68,6 +68,7 @@ if __name__ == '__main__':
                          feature_col=args.feature_col,
                          label_col=args.label_col,
                          time_step_column=args.time_step_column,
-                         config_path=args.config_path)
+                         config_path=args.config_path,
+                         train=args.train)
         lstm.excute(args.root_path)
 

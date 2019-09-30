@@ -14,15 +14,17 @@ class LSTM_IMPL(object):
                  feature_col=('speed', 'acceleration', 'accelerationX', 'accelerationY', 'accelerationZ'),
                  label_col='flag',
                  time_step_column='flagtime',
-                 config_path=''):
+                 config_path='',
+                 train=True):
         log_configure.init_log(log_name='lstm', log_path=log_path)
         self.__feature_col = list(feature_col)#['speed', 'acceleration', 'accelerationX', 'accelerationY', 'accelerationZ']
         self.__label_col = label_col#'flag'
         self.__time_step_column = time_step_column#'flagtime'
         self.__file_key = file_key#'lstm-[0-9]'
+        self.__train = train
 
         self.__config = parse_config.get_config(config_path)
-        logging.info('mode param: feature_col {}, label_col {}, time_step_column {}, config {}'.format(feature_col, label_col, time_step_column, self.__config))
+        logging.info('mode param: train{} feature_col {}, label_col {}, time_step_column {}, config {}'.format(train, feature_col, label_col, time_step_column, self.__config))
         self.__lstm_mode = LSTM(self.__config['input_num'],
                                 self.__config['time_step'],
                                 self.__config['output_num'],
@@ -41,11 +43,12 @@ class LSTM_IMPL(object):
     def excute(self, path):
 
         data_parse = data_frame(path, self.__config['time_step'], self.__feature_col, self.__label_col,self.__time_step_column, self.__file_key)
-        logging.debug('start train...')
-        self.__lstm_mode.train(data_parse.next_batch, self.__optimize.generalization_optimize)
-        data_parse.clean()
+        if self.__train:
+            print('start train...')
+            self.__lstm_mode.train(data_parse.next_batch, self.__optimize.generalization_optimize)
+            data_parse.clean()
 
-        logging.debug('start test...')
+        print('start train...')
         predict = self.__lstm_mode.predict(data_parse.next_batch, self.__optimize.generalization_predict)
         col = list()
         col.append(self.__label_col)
