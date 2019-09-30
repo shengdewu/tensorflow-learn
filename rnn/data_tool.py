@@ -47,12 +47,11 @@ class data_frame(object):
 
     def _append_data(self, data, data_array, label_array):
         label = data.loc[:, self.__label_colum]
-        label.replace(-2, 0, inplace=True)
         l = label.iloc[0]
         if l == 1:
             self.__position += 1
-        larray = np.zeros(shape=(2,), dtype=np.int)
-        larray[l] = 1
+        larray = np.zeros(shape=(2,), dtype=np.float)
+        larray[l] = 1.0
         vmin = data.loc[:, self.__feature_column].min(axis=0)
         vmax = data.loc[:, self.__feature_column].max(axis=0)
 
@@ -77,6 +76,8 @@ class data_frame(object):
                 normal_data_dict[column] = tmp_normal_data
             normal_data = pd.DataFrame(normal_data_dict)
 
+        # print('data {}'.format(normal_data.to_numpy()))
+        # print('label {}'.format(larray))
         data_array.append(normal_data.to_numpy())
         label_array.append(larray)
         return

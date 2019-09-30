@@ -102,10 +102,10 @@ class gradient_descent(object):
                         if max_accuracy < accuracy_value:
                             max_accuracy = accuracy_value
                             saver.save(sess, save_path=self.__mode_path)
-                    print('predict {}\n label {}'.format(np.argmax(pred, axis=1), np.argmax(ys, axis=1)))
+                    #print('predict {}\n label {}'.format(np.argmax(pred, axis=1), np.argmax(ys, axis=1)))
                     print('after %d training step(s), accuracy on train batch is %g' % (step, accuracy_value))
-            test_xs, test_ys = batch_data(batch_size=None, train=False)
-            self._eval(x, test_xs, y, test_ys, accuracy, logits, sess, batch_size)
+            # test_xs, test_ys = batch_data(batch_size=None, train=False)
+            # self._eval(x, test_xs, y, test_ys, accuracy, logits, sess, batch_size)
         return
 
     def _eval(self, x, xs, y, ys, accuracy, logits, sess, batch_size):
