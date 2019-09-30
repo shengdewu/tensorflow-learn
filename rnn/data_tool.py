@@ -15,8 +15,7 @@ class data_frame(object):
         self.__time_step_column = time_step_column
         self.__next_batch = 0
         self.__file_key = file_key
-        self.__position = 0
-        self.__test, self.__train = self._featch_data()
+        self.__train, self.__test = self._featch_data()
         return
 
     def _seek_data_source_file(self,data_source_path, filter_key, pos=1):
@@ -45,11 +44,9 @@ class data_frame(object):
             data_sourc.append(source_name)
         return data_sourc
 
-    def _append_data(self, data, data_array, label_array):
+    def _append_data(self, data, negative_array, positive_array):
         label = data.loc[:, self.__label_colum]
         l = label.iloc[0]
-        if l == 1:
-            self.__position += 1
         larray = np.zeros(shape=(2,), dtype=np.float)
         larray[l] = 1.0
         vmin = data.loc[:, self.__feature_column].min(axis=0)
@@ -78,34 +75,51 @@ class data_frame(object):
 
         # print('data {}'.format(normal_data.to_numpy()))
         # print('label {}'.format(larray))
-        data_array.append(normal_data.to_numpy())
-        label_array.append(larray)
+        if l == 1:
+            positive_array.append((normal_data.to_numpy().tolist(), larray.tolist()))
+        else:
+            negative_array.append((normal_data.to_numpy().tolist(), larray.tolist()))
         return
 
     def _featch_data(self):
         use_col = self.__feature_column.copy()
         use_col.append(self.__label_colum)
         use_col.append(self.__time_step_column)
-
         file_list = self._seek_data_source_file(self.__path, self.__file_key, 1)
-
-        data = self._convert_list(use_col, file_list)
-        index = [x for x in range(len(data[0]))]
-        k = int(len(data[0]) * 0.25)
+        positive_array, negative_array = self._convert_list(use_col, file_list)
+        #正样本
+        index = [x for x in range(len(positive_array))]
+        k = int(len(positive_array) * 0.25)
         test_index = random.sample(index, k)
-        print('featch test {}'.format(test_index))
-        test_data_x = [data[0][x] for x in test_index]
-        test_data_y = [data[1][x] for x in test_index]
+        print('featch positive test {}'.format(test_index))
+        test_positive = [positive_array[x] for x in test_index]
 
         train_index = set(index).difference(set(test_index))
-        print('featch train {}'.format(train_index))
-        train_data_x = [data[0][x] for x in train_index]
-        train_data_y = [data[1][x] for x in train_index]
-        return (test_data_x, test_data_y), (train_data_x, train_data_y)
+        print('featch positive train {}'.format(train_index))
+        train_positive = [positive_array[x] for x in train_index]
+
+        #负样本
+        index = [x for x in range(len(negative_array))]
+        k = int(len(negative_array) * 0.25)
+        test_index = random.sample(index, k)
+        print('featch negative test {}'.format(test_index))
+        test_negative = [negative_array[x] for x in test_index]
+
+        train_index = set(index).difference(set(test_index))
+        print('featch negative train {}'.format(train_index))
+        train_negative = [negative_array[x] for x in train_index]
+
+        train_positive.extend(train_negative)
+        test_positive.extend(test_negative)
+
+        np.random.shuffle(train_positive)
+        np.random.shuffle(test_positive)
+
+        return train_positive, test_positive
 
     def _convert_list(self, use_col, file_list):
-        data_array = []
-        label_array = []
+        negative_array = []
+        positive_array = []
         for fl in file_list:
             df = pd.read_csv(fl, engine='c', usecols=use_col, encoding='gbk')
             df = df.loc[(df[self.__label_colum] == 1) | (df[self.__label_colum] == 0)]
@@ -120,32 +134,40 @@ class data_frame(object):
                         if self.__time_step != count or self.__time_step != label:
                             raise RuntimeError('step is not equal {}!= {} or {}'.format(self.__time_step, label, count))
                         sample = d.drop(columns=[self.__time_step_column])
-                        self._append_data(sample, data_array, label_array)
+                        self._append_data(sample, negative_array, positive_array)
                 else:
                     label = dg[1].duplicated(subset=self.__label_colum, keep=False).value_counts()[True]
                     if self.__time_step != label:
                         raise RuntimeError('step is not equal label not match {}!= {}'.format(self.__time_step, label))
                     sample = dg[1].drop(columns=[self.__time_step_column])
-                    self._append_data(sample, data_array, label_array)
-        print('total : {}/{}'.format(len(data_array), self.__position))
-        return data_array, label_array
+                    self._append_data(sample, negative_array, positive_array)
+        print('total : {}/{}'.format(len(positive_array)+len(negative_array), len(positive_array)))
+        return positive_array, negative_array
 
     def next_batch(self, batch_size, train=True):
         data = None
         label = None
         if train:
-            if self.__next_batch + batch_size <= len(self.__train[0]):
-                data = np.array(self.__train[0][self.__next_batch:self.__next_batch + batch_size])
-                label = np.array(self.__train[1][self.__next_batch:self.__next_batch + batch_size])
+            if self.__next_batch + batch_size <= len(self.__train):
+                train = self.__train[self.__next_batch:self.__next_batch + batch_size]
+                data = [x[0] for x in train]
+                label = [x[1] for x in train]
+                data = np.array(data)
+                label = np.array(label)
             self.__next_batch += batch_size
         else:
             if batch_size is None:
-                data = np.array(self.__test[0])
-                label = np.array(self.__test[1])
+                data = [x[0] for x in self.__test]
+                label = [x[1] for x in self.__test]
+                data = np.array(data)
+                label = np.array(label)
             else:
-                if self.__next_batch + batch_size <= len(self.__test[0]):
-                    data = np.array(self.__test[0][self.__next_batch:self.__next_batch + batch_size])
-                    label = np.array(self.__test[1][self.__next_batch:self.__next_batch + batch_size])
+                if self.__next_batch + batch_size <= len(self.__test):
+                    test = self.__test[self.__next_batch:self.__next_batch + batch_size]
+                    data = [x[0] for x in test]
+                    label = [x[1] for x in test]
+                    data = np.array(data)
+                    label = np.array(label)
                 self.__next_batch += batch_size
         return data, label
 
