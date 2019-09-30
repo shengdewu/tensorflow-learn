@@ -11,7 +11,7 @@
         <cell_unit>55</cell_unit>
     </cell_layer>
     <optimize>
-        <batch_size>25</batch_size>
+        <batch_size>40</batch_size>
         <learn_rate>0.0009</learn_rate>
         <decay_rate>0.99</decay_rate>
         <moving_decay>0.99</moving_decay>

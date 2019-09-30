@@ -48,7 +48,7 @@ class LSTM_IMPL(object):
             self.__lstm_mode.train(data_parse.next_batch, self.__optimize.generalization_optimize)
             data_parse.clean()
 
-        print('start train...')
+        print('start test...')
         predict = self.__lstm_mode.predict(data_parse.next_batch, self.__optimize.generalization_predict)
         col = list()
         col.append(self.__label_col)
