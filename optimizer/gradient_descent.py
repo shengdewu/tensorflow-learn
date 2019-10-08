@@ -113,25 +113,25 @@ class gradient_descent(object):
         pred = np.argmax(pred, axis=1)
         label = np.argmax(ys, axis=1)
 
-        tp = 0
-        fn = 0
-        fp = 0
-        for p, l in zip(pred, label):
-            if p == l and p == 1:
-                tp += 1
-            if p == 1 and l == 0:
-                fp += 1
-            if p == 0 and l == 1:
-                fn += 1
-
-        precision = np.inf
-        if tp + fp != 0:
-            precision = tp / (tp + fp)
-        recall = np.inf
-        if tp + fn != 0:
-            recall = tp / (tp + fn)
-
-        print('optimize eval, test accuracy is {}, [label:{}-pred:{}],precision={}, recall={}'.format(acc,label, pred, precision, recall))
+        # tp = 0
+        # fn = 0
+        # fp = 0
+        # for p, l in zip(pred, label):
+        #     if p == l and p == 1:
+        #         tp += 1
+        #     if p == 1 and l == 0:
+        #         fp += 1
+        #     if p == 0 and l == 1:
+        #         fn += 1
+        #
+        # precision = np.inf
+        # if tp + fp != 0:
+        #     precision = tp / (tp + fp)
+        # recall = np.inf
+        # if tp + fn != 0:
+        #     recall = tp / (tp + fn)
+        #
+        # print('optimize eval, test accuracy is {}, [label:{}-pred:{}],precision={}, recall={}'.format(acc,label, pred, precision, recall))
         return pred, label
 
     def generalization_predict(self, next_data, x, logits, y, batch_size):
